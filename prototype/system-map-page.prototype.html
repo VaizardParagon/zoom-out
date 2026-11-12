@@ -1,0 +1,422 @@
+<title>System Map Page Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<!-- PROTOTYPE, throwaway. Three variants of the version one system-map page, switchable via #flows-first / #scope-first / #ladder-board. Invented sample data (a ferry booking system). -->
+<style>
+  /* Layout: one column. Status is one ordinal ramp (hollow -> hatched -> pale -> mid -> strong); "blocked" is a red ring laid over whatever step the feature has reached. */
+  :root {
+    --bg: #f3f5f7; --surface: #ffffff; --ink: #14212c; --muted: #5a6875; --line: #d2d9e0;
+    --s1: #dbe7ef; --s2: #b3cfe2; --s3: #4f8fbd; --s4: #123f63;
+    --on3: #ffffff; --on4: #ffffff;
+    --block: #c0392f; --block-soft: #f9e3e0;
+    --bar: #14212c; --bar-ink: #ffffff;
+    --body: "Public Sans", "Segoe UI", Arial, sans-serif;
+    --mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e151b; --surface: #172029; --ink: #e5ebf0; --muted: #98a6b3; --line: #2b3742;
+      --s1: #1f2e3a; --s2: #2c4a61; --s3: #4a8cba; --s4: #b4dcf8;
+      --on3: #0e151b; --on4: #0e151b;
+      --block: #f2776b; --block-soft: #3c1c19;
+      --bar: #e5ebf0; --bar-ink: #0e151b; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e151b; --surface: #172029; --ink: #e5ebf0; --muted: #98a6b3; --line: #2b3742;
+    --s1: #1f2e3a; --s2: #2c4a61; --s3: #4a8cba; --s4: #b4dcf8;
+    --on3: #0e151b; --on4: #0e151b;
+    --block: #f2776b; --block-soft: #3c1c19;
+    --bar: #e5ebf0; --bar-ink: #0e151b; color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+  .page {
+    max-width: 860px; margin: 0 auto; padding-block: 28px 120px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; gap: 44px;
+  }
+  .page.wide { max-width: 1080px; }
+  h1, h2, h3, p, ol, ul { margin: 0; }
+  ol, ul { padding: 0; list-style: none; }
+  section, header { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(26px, 5vw, 38px); line-height: 1.12; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; max-width: 24ch; }
+  h2 { font-size: 21px; line-height: 1.25; font-weight: 600; text-wrap: balance; }
+  h3 { font-size: 16px; font-weight: 600; }
+  .muted { color: var(--muted); font-size: 14.5px; max-width: 64ch; }
+  .proto { font-family: var(--mono); font-size: 12px; color: var(--block); border: 1px dashed var(--block); border-radius: 4px; padding: 4px 10px; align-self: flex-start; }
+
+  /* status marks */
+  .sq { width: 14px; height: 14px; border-radius: 2px; box-sizing: border-box; flex: none; display: block; padding: 0; border: 0; background: var(--c); }
+  button.sq { cursor: pointer; }
+  button.sq:hover, button.sq:focus-visible, button.sq.on { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .s0 { --c: transparent; --t: var(--ink); }
+  .s1 { --c: var(--s1); --t: var(--ink); }
+  .s2 { --c: var(--s2); --t: var(--ink); }
+  .s3 { --c: var(--s3); --t: var(--on3); }
+  .s4 { --c: var(--s4); --t: var(--on4); }
+  .sq.s0 { border: 1.5px solid var(--muted); }
+  .sq.s1, .seg.s1 { background: repeating-linear-gradient(135deg, var(--s3) 0 1.5px, transparent 1.5px 5px), var(--s1); }
+  .sq.bl { box-shadow: 0 0 0 2px var(--block); }
+  .tally { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; color: var(--muted); }
+  .tally li { display: flex; align-items: center; gap: 7px; }
+  .tally b { color: var(--ink); font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .pill { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; background: var(--c); color: var(--t); border: 1px solid var(--line); }
+  .pill.bk { background: var(--block-soft); color: var(--block); border-color: transparent; }
+
+  /* flow track */
+  .flow { display: flex; flex-direction: column; gap: 8px; }
+  .segs { display: flex; gap: 3px; min-width: 0; }
+  .seg { flex: 1 1 0; min-width: 0; height: 34px; border-radius: 3px; background: var(--c); color: var(--t); box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13px; font-weight: 500; }
+  .seg.s0 { border: 1.5px dashed var(--muted); }
+  .seg.s1 span { background: var(--s1); padding: 0 4px; border-radius: 2px; }
+  .seg.bl { box-shadow: inset 0 0 0 2.5px var(--block); }
+  .brk { flex: 0 0 16px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); color: var(--block); font-weight: 500; }
+  .reach { font-size: 14.5px; color: var(--muted); }
+  .reach b { color: var(--ink); font-weight: 600; }
+  details summary { cursor: pointer; }
+  details summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .steps { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 4px; }
+  .steps li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: 2px 8px; font-size: 14.5px; }
+  .steps .n { font-family: var(--mono); color: var(--muted); }
+  .steps .why { grid-column: 2; color: var(--muted); font-size: 13.5px; }
+  .more { font-size: 13.5px; color: var(--muted); }
+
+  /* holds */
+  .holds { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+  .hold { display: flex; flex-direction: column; gap: 8px; border-top: 3px solid var(--ink); padding-top: 10px; min-width: 0; }
+  .hold .cnt { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .hold ul { display: flex; flex-direction: column; gap: 8px; }
+  .hold li { font-size: 14px; color: var(--muted); line-height: 1.4; }
+  .hold li strong { color: var(--ink); font-weight: 600; }
+
+  /* A: scope rows */
+  .fam { border-bottom: 1px solid var(--line); }
+  .fam summary { list-style: none; display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; font-size: 15px; }
+  .fam summary::-webkit-details-marker { display: none; }
+  .fam summary::before { content: "+"; font-family: var(--mono); color: var(--muted); }
+  .fam[open] summary::before { content: "\2212"; }
+  .row-sq { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; max-width: 190px; }
+  .feat { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 16px 24px; }
+  .feat li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 2px 10px; font-size: 14.5px; line-height: 1.4; }
+  .feat li .sq { width: 11px; height: 11px; margin-top: 5px; }
+  .feat .nx { grid-column: 2; color: var(--muted); font-size: 13.5px; }
+
+  /* B: scope hero */
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; align-items: start; }
+  @media (max-width: 760px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+  .blocks { display: flex; flex-wrap: wrap; gap: 22px 30px; }
+  .blk { display: flex; flex-direction: column; gap: 8px; }
+  .blk h3 { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .blk div { display: grid; grid-template-columns: repeat(3, 26px); gap: 7px; }
+  .blk .sq { width: 26px; height: 26px; border-radius: 4px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 8px; position: sticky; top: 16px; min-height: 150px; }
+  .panel .where { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .panel p { font-size: 14.5px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .big { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .big b { font-size: clamp(40px, 9vw, 64px); line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .named { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+  .named span { font-size: 12.5px; color: var(--muted); line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
+  @media (max-width: 560px) { .named { display: none; } }
+
+  /* C: ladder board */
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  thead th { font-size: 13px; font-weight: 600; border-bottom: 2px solid var(--ink); }
+  thead th b { display: block; font-family: var(--mono); font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  tbody th { font-size: 14.5px; font-weight: 500; white-space: nowrap; }
+  td div { display: flex; flex-wrap: wrap; gap: 5px; }
+  td .sq { width: 18px; height: 18px; border-radius: 3px; }
+  .inline { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 36px; }
+  .rail li { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; padding-bottom: 14px; font-size: 14.5px; }
+  .rail li::before { content: ""; position: absolute; left: 14px; top: 30px; bottom: 0; width: 2px; background: var(--line); }
+  .rail li:last-child::before { display: none; }
+  .rail .dot { width: 30px; height: 30px; border-radius: 50%; }
+  .rail .why { display: block; color: var(--muted); font-size: 13.5px; }
+  .rail li.cut::after { content: "stops here"; position: absolute; left: 42px; top: -11px; font-family: var(--mono); font-size: 11px; color: var(--block); }
+
+  /* B: system diagram */
+  .dg { min-width: 760px; width: 100%; height: auto; display: block; }
+  .dg text { font-family: var(--body); fill: var(--ink); }
+  .dg .band { font-family: var(--mono); font-size: 11px; fill: var(--muted); letter-spacing: .08em; }
+  .dg .rule { stroke: var(--line); stroke-width: 1; }
+  .dg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .dg .ext .box { fill: transparent; stroke-dasharray: 5 4; stroke: var(--muted); }
+  .dg .node { cursor: pointer; }
+  .dg .node:focus { outline: none; }
+  .dg .node:hover .box, .dg .node.on .box, .dg .node:focus-visible .box { stroke: var(--ink); stroke-width: 2.5; }
+  .dg .tt { font-size: 13px; font-weight: 600; }
+  .dg .cap { font-size: 11.5px; fill: var(--muted); }
+  .dg .q { fill: var(--c); }
+  .dg .q.s0 { stroke: var(--muted); stroke-width: 1.5; }
+  .dg .q.s1 { fill: url(#hatch); }
+  .dg .q.bl { stroke: var(--block); stroke-width: 2; }
+  .dg .ln { stroke: var(--muted); stroke-width: 1.5; }
+  .dg .ah { fill: var(--muted); }
+  .dg .av { fill: var(--ink); }
+  .dg .avt { fill: var(--bg); font-size: 9px; font-weight: 600; font-family: var(--mono); }
+  .inline .feat { padding-left: 0; padding-bottom: 0; }
+  .who { font-size: 14px; }
+  .who code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 20px; }
+
+  /* prototype switcher, not part of the design */
+  .switch { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+    background: var(--bar); color: var(--bar-ink); border-radius: 999px; padding: 6px 8px; display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.3); max-width: calc(100% - 32px); }
+  .switch button { background: transparent; color: inherit; border: 0; font: inherit; font-size: 16px; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
+  .switch button:hover, .switch button:focus-visible { outline: 2px solid var(--bar-ink); outline-offset: -4px; }
+  .switch span { padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+
+<div id="app"></div>
+<div class="switch">
+  <button id="prev" aria-label="Previous variant">&larr;</button>
+  <span id="vlabel"></span>
+  <button id="next" aria-label="Next variant">&rarr;</button>
+</div>
+
+<script>
+const L = ['Not started', 'In progress', 'Built', 'Works in testing', 'Proven live'];
+const BK = { d: 'Waiting on a decision', o: 'Switched off on the live site', b: 'Needs something not built yet' };
+// [key, title, step on the ladder, blocker kind, note]
+const AREAS = [
+  ['Timetable', [
+    ['tt-pub', 'Publish the seasonal timetable', 4, '', 'Summer timetable is live.'],
+    ['tt-day', 'Show sailings for a date', 4, '', 'Checked on the live site 10 Nov.'],
+    ['tt-cancel', 'Cancelled sailing notice', 3, '', 'Passes tests. Not yet tried live.'],
+    ['tt-tide', 'Tide-dependent departure times', 2, '', 'Merged. No test covers it.'],
+    ['tt-extra', 'Extra sailings on holidays', 1, '', 'Open pull request.'],
+    ['tt-lang', 'Timetable in a second language', 0, '', 'Promised in the kickoff interview.']]],
+  ['Booking', [
+    ['bk-search', 'Search crossings', 4, '', 'Checked on the live site 10 Nov.'],
+    ['bk-party', 'Choose passengers and vehicle', 4, '', 'Checked on the live site 10 Nov.'],
+    ['bk-size', 'Vehicle size check', 3, '', 'Passes tests.'],
+    ['bk-cabin', 'Cabin selection', 2, '', 'Merged. No test covers it.'],
+    ['bk-pets', 'Pets and bikes', 2, '', 'Merged. No test covers it.'],
+    ['bk-return', 'Return trips', 4, '', 'Checked on the live site 10 Nov.'],
+    ['bk-group', 'Group booking for ten or more', 0, '', 'Added after the 4 Nov client meeting.'],
+    ['bk-hold', 'Hold seats for 15 minutes', 3, '', 'Passes tests.'],
+    ['bk-access', 'Accessibility needs', 1, '', 'Ticket in progress.']]],
+  ['Payment', [
+    ['pay-card', 'Card payment', 3, 'o', 'Works with test cards. The live payment account is not switched on.'],
+    ['pay-refund', 'Refunds', 2, 'd', 'Client has not decided the refund rule for weather cancellations.'],
+    ['pay-voucher', 'Vouchers', 1, '', 'Open pull request.'],
+    ['pay-resident', 'Island resident discount', 2, 'd', 'Client has not said who counts as a resident.'],
+    ['pay-invoice', 'Invoice for business customers', 0, '', ''],
+    ['pay-receipt', 'Receipt email', 3, '', 'Passes tests.'],
+    ['pay-retry', 'Retry a failed payment', 2, '', 'Merged. No test covers it.']]],
+  ['Tickets', [
+    ['tk-qr', 'E-ticket with QR code', 3, '', 'Passes tests.'],
+    ['tk-wallet', 'Add ticket to phone wallet', 0, '', ''],
+    ['tk-change', 'Change a booking', 2, '', 'Merged. No test covers it.'],
+    ['tk-cancel', 'Cancel a booking', 2, '', 'Merged. No test covers it.'],
+    ['tk-resend', 'Resend a ticket', 3, '', 'Passes tests.'],
+    ['tk-kiosk', 'Print a ticket at the kiosk', 0, 'b', 'Waits for kiosk mode, which has no code yet.']]],
+  ['Accounts', [
+    ['ac-sign', 'Sign up and sign in', 4, '', 'Checked on the live site 10 Nov.'],
+    ['ac-reset', 'Password reset', 4, '', 'Checked on the live site 10 Nov.'],
+    ['ac-people', 'Saved travellers', 3, '', 'Passes tests.'],
+    ['ac-cars', 'Saved vehicles', 3, '', 'Passes tests.'],
+    ['ac-history', 'Booking history', 4, '', 'Checked on the live site 10 Nov.'],
+    ['ac-delete', 'Delete my account', 1, '', 'Ticket in progress.']]],
+  ['Boarding', [
+    ['bd-sign', 'Staff sign-in', 4, '', 'Checked on the live site 10 Nov.'],
+    ['bd-scan', 'Scan tickets at the ramp', 2, '', 'Merged. Not tried on a real scanner.'],
+    ['bd-offline', 'Scan with no signal', 1, '', 'Open pull request.'],
+    ['bd-manifest', 'Passenger list for a sailing', 3, '', 'Passes tests.'],
+    ['bd-standby', 'Standby queue', 0, '', ''],
+    ['bd-noshow', 'Mark no-shows', 2, '', 'Merged. No test covers it.'],
+    ['bd-deck', 'Vehicle deck load plan', 0, 'd', 'Operator has not supplied deck sizes.']]],
+  ['Operations', [
+    ['op-cancel', 'Cancel a sailing and tell passengers', 2, 'o', 'Text messages are switched off on the live site.'],
+    ['op-move', 'Move passengers to another sailing', 1, '', 'Ticket in progress.'],
+    ['op-cap', 'Capacity per vessel', 3, '', 'Passes tests.'],
+    ['op-price', 'Price rules by season', 3, '', 'Passes tests.'],
+    ['op-swap', 'Swap the vessel on a sailing', 0, '', ''],
+    ['op-report', 'Daily takings report', 2, '', 'Merged. No test covers it.'],
+    ['op-audit', 'Record of staff changes', 2, '', 'Merged. No test covers it.']]],
+  ['Messages', [
+    ['ms-confirm', 'Booking confirmation email', 4, '', 'Checked on the live site 10 Nov.'],
+    ['ms-delay', 'Delay text message', 1, 'o', 'Text messages are switched off on the live site.'],
+    ['ms-remind', 'Reminder the day before', 2, '', 'Merged. No test covers it.'],
+    ['ms-weather', 'Weather warning', 0, '', ''],
+    ['ms-optin', 'Marketing opt-in', 3, '', 'Passes tests.']]]
+];
+const FLOWS = [
+  ['A passenger books a crossing', [
+    ['Finds a sailing', ['tt-day', 'bk-search']],
+    ['Chooses passengers and vehicle', ['bk-party', 'bk-size']],
+    ['Pays', ['pay-card']],
+    ['Gets a ticket', ['tk-qr', 'ms-confirm']],
+    ['Changes or cancels', ['tk-change', 'tk-cancel', 'pay-refund']],
+    ['Boards', ['bd-scan']]]],
+  ['Staff run a sailing', [
+    ['Sign in', ['bd-sign']],
+    ['Open the passenger list', ['bd-manifest']],
+    ['Scan tickets at the ramp', ['bd-scan', 'bd-offline']],
+    ['Handle standby', ['bd-standby']],
+    ['Mark no-shows', ['bd-noshow']],
+    ['Cancel for weather', ['op-cancel', 'op-move']]]]
+];
+
+// who is on what, as of the last refresh: key -> [person, ticket, branch]
+const WORK = {
+  'tt-extra': ['Maya R', 'FER-112, pull request #212', 'feat/holiday-sailings'],
+  'pay-voucher': ['Maya R', 'FER-97, pull request #208', 'feat/vouchers'],
+  'bk-access': ['Jon P', 'FER-88', 'feat/access-needs'],
+  'ac-delete': ['Jon P', 'FER-104', 'feat/delete-account'],
+  'bd-offline': ['Sam K', 'FER-119, pull request #215', 'feat/offline-scan'],
+  'op-move': ['Sam K', 'FER-121', 'feat/move-passengers'],
+  'ms-delay': ['Lena O', 'FER-90', 'feat/delay-texts']
+};
+// [id, title, band, column, feature keys, note for outside services]
+const BANDS = ['PASSENGERS', 'STAFF', 'BACKGROUND'];
+const PARTS = [
+  ['p-time', 'Timetable', 0, 0, ['tt-day', 'tt-cancel', 'tt-lang']],
+  ['p-search', 'Search and choose', 0, 1, ['bk-search', 'bk-party', 'bk-size', 'bk-cabin', 'bk-pets', 'bk-return', 'bk-group', 'bk-hold', 'bk-access']],
+  ['p-pay', 'Checkout', 0, 2, ['pay-card', 'pay-voucher', 'pay-resident', 'pay-invoice', 'pay-retry']],
+  ['p-ticket', 'My ticket', 0, 3, ['tk-qr', 'tk-wallet', 'tk-resend', 'tk-kiosk']],
+  ['p-manage', 'My bookings', 0, 4, ['tk-change', 'tk-cancel', 'ac-history', 'pay-refund']],
+  ['p-account', 'Account', 0, 5, ['ac-sign', 'ac-reset', 'ac-people', 'ac-cars', 'ac-delete']],
+  ['s-admin', 'Office admin', 1, 0, ['tt-pub', 'tt-tide', 'tt-extra', 'op-cap', 'op-price', 'op-report', 'op-audit']],
+  ['s-ramp', 'Ramp scanner', 1, 3, ['bd-sign', 'bd-scan', 'bd-offline', 'bd-standby', 'bd-noshow']],
+  ['s-desk', 'Sailing desk', 1, 4, ['bd-manifest', 'bd-deck', 'op-cancel', 'op-move', 'op-swap']],
+  ['b-pay', 'Payment provider', 2, 2, [], 'Outside service. Test mode only.'],
+  ['b-msg', 'Email and texts', 2, 4, ['ms-confirm', 'ms-delay', 'ms-remind', 'ms-weather', 'ms-optin', 'pay-receipt']]
+];
+const LINKS = [['p-time', 'p-search'], ['p-search', 'p-pay'], ['p-pay', 'p-ticket'], ['p-ticket', 'p-manage'], ['p-account', 'p-manage'],
+  ['s-admin', 'p-time'], ['p-pay', 'b-pay'], ['p-ticket', 's-ramp'], ['s-desk', 's-ramp'], ['s-desk', 'b-msg']];
+
+const F = [], BY = {};
+AREAS.forEach(([area, fs]) => fs.forEach(([k, t, s, b, n]) => { const f = { k, t, s, b, n, area }; F.push(f); BY[k] = f; }));
+const count = s => F.filter(f => f.s === s).length;
+const blocked = F.filter(f => f.b);
+const flows = FLOWS.map(([name, steps]) => {
+  const st = steps.map(([t, ks]) => {
+    const fs = ks.map(k => BY[k]);
+    const low = fs.reduce((a, f) => f.s < a.s ? f : a);
+    const bl = fs.find(f => f.b);
+    return { t, s: low.s, bl, why: bl ? BK[bl.b] + ': ' + bl.t.toLowerCase() : (low.s < 3 ? L[low.s] + ': ' + low.t.toLowerCase() : '') };
+  });
+  let cut = st.findIndex(x => x.s < 3 || x.bl); if (cut < 0) cut = st.length;
+  return { name, st, cut };
+});
+
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const label = f => `${f.t}. ${L[f.s]}${f.b ? ', blocked' : ''}`;
+const sqBtn = f => `<button class="sq s${f.s}${f.b ? ' bl' : ''}" data-k="${f.k}" title="${esc(label(f))}" aria-label="${esc(label(f))}"></button>`;
+const sqI = f => `<i class="sq s${f.s}${f.b ? ' bl' : ''}"></i>`;
+const pills = f => `<span class="pills"><span class="pill s${f.s}">${L[f.s]}</span>${f.b ? `<span class="pill bk">${BK[f.b]}</span>` : ''}</span>`;
+const tally = () => `<ul class="tally">${[4, 3, 2, 1, 0].map(s => `<li><i class="sq s${s}"></i><b>${count(s)}</b>${L[s].toLowerCase()}</li>`).join('')}<li><i class="sq s0 bl"></i><b>${blocked.length}</b>blocked, at any step</li></ul>`;
+const track = fl => `<div class="segs">${fl.st.map((x, i) => `${i === fl.cut ? '<div class="brk" aria-hidden="true">//</div>' : ''}<div class="seg s${x.s}${x.bl ? ' bl' : ''}" title="${esc(x.t + '. ' + L[x.s])}"><span>${i + 1}</span></div>`).join('')}</div>`;
+const reach = fl => fl.cut >= fl.st.length ? '<b>Works end to end in testing.</b>' : `<b>${fl.cut ? `Works in testing up to step ${fl.cut}.` : 'Does not get past the first step.'}</b> Stops at "${fl.st[fl.cut].t}". ${fl.st[fl.cut].why}.`;
+const holds = withList => `<div class="holds">${Object.keys(BK).map(k => { const fs = blocked.filter(f => f.b === k); return `<div class="hold"><h3>${BK[k]}</h3><p class="cnt">${fs.length} feature${fs.length === 1 ? '' : 's'}${k === 'b' ? ' · the only kind that is coding' : ''}</p>${withList ? `<ul>${fs.map(f => `<li><strong>${f.t}.</strong> ${f.n}</li>`).join('')}</ul>` : ''}</div>`; }).join('')}</div>`;
+const head = `<p class="proto">Prototype · invented sample data</p><p class="eyebrow">Tidewater Ferries booking system · 12 Nov 2026</p>`;
+const HEADLINE = 'Passengers can find and choose a sailing. Nobody can pay on the live site yet.';
+const foot = `<footer><p class="muted"><strong>Where this comes from.</strong> Scope: the plan, the kickoff interview and notes from the 4 Nov client meeting. Status: code, tests and the tracker, read on 12 Nov. Live checks are from 10 Nov and were not repeated.</p></footer>`;
+const who = f => WORK[f.k] ? `<span class="who"><strong>${WORK[f.k][0]}</strong> · ${WORK[f.k][1]} · <code>${WORK[f.k][2]}</code></span>` : '';
+const detail = f => f ? `<p class="where">${f.area}</p><h3>${f.t}</h3>${pills(f)}<p>${f.n || 'Nothing exists yet.'}</p>${who(f)}<p class="where">Last checked 12 Nov</p>` : `<p class="where">Detail</p><p class="muted">Pick a square to see what it is and where it stands.</p>`;
+const initials = n => n.split(' ').map(w => w[0]).join('');
+const PB = {};
+PARTS.forEach(p => PB[p[0]] = p);
+const partDetail = id => {
+  if (!id) return `<p class="muted">Pick a box to see its features and who is on them.</p>`;
+  const [, title, band, , ks, note] = PB[id];
+  return `<p class="where">${BANDS[band]}</p><h3>${title}</h3>${note ? `<p>${note}</p>` : ''}<ul class="feat">${ks.map(k => BY[k]).map(f => `<li>${sqI(f)}<span>${f.t}</span><span class="nx">${L[f.s]}${f.b ? ' · ' + BK[f.b] : ''}${WORK[f.k] ? ' · ' + who(f) : ''}</span></li>`).join('')}</ul>`;
+};
+function diagram() {
+  const W = 148, H = 88, P = 172, R = 140, pos = {};
+  PARTS.forEach(p => pos[p[0]] = { x: 8 + p[3] * P, y: p[2] * R + 26 });
+  const lines = LINKS.map(([a, b]) => {
+    const A = pos[a], B = pos[b]; let x1, y1, x2, y2;
+    if (A.y === B.y) { y1 = y2 = A.y + H / 2; if (B.x > A.x) { x1 = A.x + W; x2 = B.x - 2; } else { x1 = A.x; x2 = B.x + W + 2; } }
+    else { x1 = x2 = A.x + W / 2; if (B.y > A.y) { y1 = A.y + H; y2 = B.y - 2; } else { y1 = A.y; y2 = B.y + H + 2; } }
+    return `<line class="ln" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arr)"/>`;
+  }).join('');
+  const nodes = PARTS.map(([id, title, , , ks, note]) => {
+    const fs = ks.map(k => BY[k]), ppl = [...new Set(fs.filter(f => WORK[f.k]).map(f => WORK[f.k][0]))];
+    return `<g class="node${note ? ' ext' : ''}" data-p="${id}" tabindex="0" role="button" aria-label="${title}" transform="translate(${pos[id].x},${pos[id].y})">
+      <rect class="box" width="${W}" height="${H}" rx="5"/><text class="tt" x="10" y="21">${title}</text>
+      ${fs.map((f, i) => `<rect class="q s${f.s}${f.b ? ' bl' : ''}" x="${10 + i * 14}" y="33" width="11" height="11" rx="2"/>`).join('')}
+      <text class="cap" x="10" y="${note ? 46 : 72}">${note ? 'Outside · test mode only' : fs.length + ' features'}</text>
+      ${ppl.map((n, i) => `<circle class="av" cx="${W - 16 - i * 22}" cy="68" r="10"/><text class="avt" x="${W - 16 - i * 22}" y="71" text-anchor="middle">${initials(n)}</text>`).join('')}</g>`;
+  }).join('');
+  return `<div class="scroll"><svg class="dg" viewBox="0 0 1040 400" role="group" aria-label="System diagram">
+    <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker>
+    <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" style="fill:var(--s1)"/><rect width="1.5" height="5" style="fill:var(--s3)"/></pattern></defs>
+    ${BANDS.map((b, i) => `<text class="band" x="8" y="${i * R + 14}">${b}</text>${i ? `<line class="rule" x1="0" x2="1040" y1="${i * R - 6}" y2="${i * R - 6}"/>` : ''}`).join('')}${lines}${nodes}</svg></div>`;
+}
+const working = () => { const by = {}; Object.keys(WORK).forEach(k => (by[WORK[k][0]] = by[WORK[k][0]] || []).push(k));
+  return `<div class="holds">${Object.keys(by).map(n => `<div class="hold"><h3>${n}</h3><ul>${by[n].map(k => `<li><strong>${BY[k].t}.</strong> ${WORK[k][1]}</li>`).join('')}</ul></div>`).join('')}</div>`; };
+
+const V = {
+  'flows-first': {
+    name: 'A · Flows first', wide: false,
+    html: () => `<header>${head}<h1>${HEADLINE}</h1>${tally()}</header>
+      <section><h2>The main flows</h2>${flows.map(fl => `<div class="flow"><h3>${fl.name}</h3>${track(fl)}<p class="reach">${reach(fl)}</p>
+        <details><summary class="more">The ${fl.st.length} steps</summary><ol class="steps">${fl.st.map((x, i) => `<li><span class="n">${i + 1}</span><span>${x.t} <span class="pill s${x.s}">${L[x.s]}</span></span>${x.why ? `<span class="why">${x.why}</span>` : ''}</li>`).join('')}</ol></details></div>`).join('')}</section>
+      <section><h2>What is holding things up</h2>${holds(true)}</section>
+      <section><h2>The whole scope, ${F.length} features</h2><p class="muted">One square is one feature. Open a row for the detail.</p><div>${AREAS.map(([a]) => { const fs = F.filter(f => f.area === a); return `<details class="fam"><summary><span>${a}</span><span class="row-sq">${fs.map(sqI).join('')}</span></summary><ul class="feat">${fs.map(f => `<li>${sqI(f)}<span>${f.t}</span><span class="nx">${L[f.s]}${f.b ? ' · ' + BK[f.b] : ''}. ${f.n}</span></li>`).join('')}</ul></details>`; }).join('')}</div></section>${foot}`
+  },
+  'scope-first': {
+    name: 'B · Scope first', wide: true,
+    html: () => `<header>${head}<div class="big"><b>${F.length}</b><h2>features promised. ${count(4)} proven live, ${count(0)} not started.</h2></div>${tally()}</header>
+      <section><div class="hero"><div class="blocks">${AREAS.map(([a]) => `<div class="blk"><h3>${a}</h3><div>${F.filter(f => f.area === a).map(sqBtn).join('')}</div></div>`).join('')}</div><div class="panel" data-detail>${detail()}</div></div></section>
+      <section><h2>How the system fits together</h2><p class="muted">One box is a screen or a part working in the background. The squares are its features. Initials show who is on it now.</p>${diagram()}<div class="inline" data-pdetail>${partDetail()}</div></section>
+      <section><h2>${HEADLINE}</h2>${flows.map(fl => `<div class="flow"><h3>${fl.name}</h3>${track(fl)}<div class="named">${fl.st.map((x, i) => `${i === fl.cut ? '<span style="width:16px"></span>' : ''}<span>${x.t}</span>`).join('')}</div><p class="reach">${reach(fl)}</p></div>`).join('')}</section>
+      <section><h2>Being worked on now</h2><p class="muted">From Linear and git, as of 12 Nov.</p>${working()}</section>
+      <section><h2>What is holding things up</h2>${holds(false)}<p class="muted">Blocked features have a red ring in the map above.</p></section>${foot}`
+  },
+  'ladder-board': {
+    name: 'C · Ladder board', wide: true,
+    html: () => `<header>${head}<h1>${HEADLINE}</h1></header>
+      <section><div class="scroll"><table><thead><tr><th></th>${L.map((l, s) => `<th><b>${count(s)}</b>${l}</th>`).join('')}</tr></thead><tbody>${AREAS.map(([a]) => `<tr><th>${a}</th>${L.map((l, s) => `<td><div>${F.filter(f => f.area === a && f.s === s).map(sqBtn).join('')}</div></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        <div class="inline" data-detail>${detail()}</div><p class="muted">Each feature sits in the column it has reached. A red ring means blocked.</p></section>
+      <div class="two">${flows.map(fl => `<section><h2>${fl.name}</h2><ol class="rail">${fl.st.map((x, i) => `<li class="${i === fl.cut ? 'cut' : ''}"><i class="sq dot s${x.s}${x.bl ? ' bl' : ''}"></i><span>${x.t}<span class="why">${x.why || L[x.s]}</span></span></li>`).join('')}</ol></section>`).join('')}</div>
+      <section><h2>What is holding things up</h2>${holds(true)}</section>${foot}`
+  }
+};
+
+const keys = Object.keys(V), app = document.getElementById('app');
+const cur = () => { const h = location.hash.slice(1); return keys.includes(h) ? h : keys[0]; };
+function show() {
+  const k = cur(), v = V[k];
+  app.innerHTML = `<div class="page${v.wide ? ' wide' : ''}">${v.html()}</div>`;
+  document.getElementById('vlabel').textContent = v.name;
+  window.scrollTo(0, 0);
+}
+const go = d => { location.hash = keys[(keys.indexOf(cur()) + d + keys.length) % keys.length]; };
+document.getElementById('prev').onclick = () => go(-1);
+document.getElementById('next').onclick = () => go(1);
+addEventListener('hashchange', show);
+addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, [contenteditable]')) return;
+  if (e.key === 'ArrowLeft') go(-1); if (e.key === 'ArrowRight') go(1);
+});
+app.addEventListener('click', e => {
+  const n = e.target.closest('.node[data-p]');
+  if (n) { pickPart(n); return; }
+  const b = e.target.closest('button.sq[data-k]'); if (!b) return;
+  app.querySelectorAll('button.sq.on').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  app.querySelector('[data-detail]').innerHTML = detail(BY[b.dataset.k]);
+});
+function pickPart(n) {
+  app.querySelectorAll('.node.on').forEach(x => x.classList.remove('on'));
+  n.classList.add('on');
+  app.querySelector('[data-pdetail]').innerHTML = partDetail(n.dataset.p);
+}
+app.addEventListener('keydown', e => {
+  const n = e.target.closest('.node[data-p]');
+  if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPart(n); }
+});
+show();
+</script>

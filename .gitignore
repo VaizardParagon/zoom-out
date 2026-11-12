@@ -1,0 +1,3 @@
+# Real client data. Reference only, never committed or shipped.
+reference/
+.playwright-mcp/

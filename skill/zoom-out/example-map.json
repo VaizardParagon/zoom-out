@@ -1,0 +1,67 @@
+{
+  "project": "Tidewater Ferries booking",
+  "about": "The website and staff tools for a small ferry company. Passengers book and pay for crossings, and staff scan tickets at the ramp and run each sailing.",
+  "updated": "2026-11-12",
+  "headline": "Passengers can find and choose a sailing. Nobody can pay on the live site yet.",
+  "recap": "This week the team finished the vehicle size check and the e-ticket, and both now pass their tests. Two features are open as pull requests: vouchers and scanning with no signal. The client asked for group booking on 4 Nov, and nobody has started it. Passengers still cannot pay on the live site, because the live payment account is not switched on.",
+  "nextSteps": [
+    { "step": "Ask the client to switch on the live payment account.", "why": "It is the one thing that stops the booking flow at step 3. No code is needed.", "skill": "/to-questionnaire" },
+    { "step": "Ask the client for the refund rule for weather cancellations.", "why": "Refunds are built but cannot be finished without this decision.", "skill": "/to-questionnaire" },
+    { "step": "Write tests for scanning tickets at the ramp.", "why": "The booking flow ends at boarding, and that step is built but not proven.", "skill": "/tdd" },
+    { "step": "Plan group booking with the client's notes.", "why": "It was promised on 4 Nov and has no plan and no code.", "skill": "/grill-with-docs" }
+  ],
+  "facts": ["Live build 4c1e9a0", "Text messages off"],
+  "hasLive": true,
+  "tracker": "linear",
+  "artifact": null,
+  "sources": {
+    "scope": "The wayfinder map, the kickoff interview and notes from the 4 Nov client meeting.",
+    "status": "Code, test results and Linear, read on 12 Nov. Live checks are from 10 Nov and were not repeated."
+  },
+  "bands": ["Passengers", "Staff", "Background"],
+  "parts": [
+    { "id": "search", "title": "Search and choose", "band": 0, "col": 0 },
+    { "id": "checkout", "title": "Checkout", "band": 0, "col": 1 },
+    { "id": "ticket", "title": "My ticket", "band": 0, "col": 2 },
+    { "id": "ramp", "title": "Ramp scanner", "band": 1, "col": 2 },
+    { "id": "payments", "title": "Payment provider", "band": 2, "col": 1, "external": true, "note": "Outside service. Test mode only." },
+    { "id": "messages", "title": "Email and texts", "band": 2, "col": 2 }
+  ],
+  "links": [["search", "checkout"], ["checkout", "ticket"], ["checkout", "payments"], ["ticket", "ramp"], ["ramp", "messages"]],
+  "features": [
+    { "id": "search-crossings", "title": "Search crossings", "part": "search", "status": "live", "evidence": "Checked on the live site 10 Nov, build 4c1e9a0.", "checked": "2026-11-10", "source": "Wayfinder map: Booking scope" },
+    { "id": "vehicle-size", "title": "Vehicle size check", "part": "search", "status": "tested", "evidence": "tests/booking/vehicle_size.test.ts passes in CI run 812.", "next": "Try it on the live site.", "checked": "2026-11-12", "source": "Wayfinder map: Booking scope" },
+    { "id": "group-booking", "title": "Group booking for ten or more", "part": "search", "status": "none", "checked": "2026-11-12", "source": "Client meeting notes, 4 Nov" },
+    { "id": "card-payment", "title": "Card payment", "part": "checkout", "status": "tested", "evidence": "Checkout tests pass with test cards.", "blocked": { "kind": "off", "note": "The live payment account is not switched on." }, "checked": "2026-11-12", "source": "Wayfinder map: Payments" },
+    { "id": "vouchers", "title": "Vouchers", "part": "checkout", "status": "progress", "evidence": "Open pull request #208.", "work": { "who": "Maya R", "ticket": "FER-97", "url": "https://linear.app/example/issue/FER-97", "branch": "feat/vouchers" }, "checked": "2026-11-12", "source": "Kickoff interview" },
+    { "id": "refunds", "title": "Refunds", "part": "checkout", "status": "built", "evidence": "Merged in src/payments/refund.ts. No test covers it.", "blocked": { "kind": "decision", "note": "The client has not decided the refund rule for weather cancellations.", "since": "2026-11-04" }, "checked": "2026-11-12", "source": "Wayfinder map: Payments" },
+    { "id": "e-ticket", "title": "E-ticket with QR code", "part": "ticket", "status": "tested", "evidence": "tests/tickets/qr.test.ts passes in CI run 812.", "checked": "2026-11-12", "source": "Wayfinder map: Tickets" },
+    { "id": "kiosk-print", "title": "Print a ticket at the kiosk", "part": "ticket", "status": "none", "blocked": { "kind": "build", "note": "Waits for kiosk mode, which has no code yet." }, "checked": "2026-11-12", "source": "Kickoff interview" },
+    { "id": "scan", "title": "Scan tickets at the ramp", "part": "ramp", "status": "built", "evidence": "Merged in apps/ramp. Not tried on a real scanner.", "checked": "2026-11-12", "source": "Wayfinder map: Boarding" },
+    { "id": "offline-scan", "title": "Scan with no signal", "part": "ramp", "status": "progress", "evidence": "Open pull request #215.", "work": { "who": "Sam K", "ticket": "FER-119", "url": "https://linear.app/example/issue/FER-119", "branch": "feat/offline-scan" }, "checked": "2026-11-12", "source": "Wayfinder map: Boarding" },
+    { "id": "confirm-email", "title": "Booking confirmation email", "part": "messages", "status": "live", "evidence": "Received from the live site 10 Nov.", "checked": "2026-11-10", "source": "Wayfinder map: Messages" },
+    { "id": "delay-text", "title": "Delay text message", "part": "messages", "status": "built", "evidence": "Merged in src/notify/delay.ts. No test covers it.", "blocked": { "kind": "off", "note": "Text messages are switched off on the live site." }, "checked": "2026-11-12", "source": "Wayfinder map: Messages" }
+  ],
+  "flows": [
+    {
+      "title": "A passenger books a crossing",
+      "lanes": ["On foot", "With a vehicle"],
+      "steps": [
+        { "title": "Finds a sailing", "features": ["search-crossings"] },
+        { "title": "Vehicle is checked", "features": { "With a vehicle": ["vehicle-size"] } },
+        { "title": "Pays", "features": ["card-payment"] },
+        { "title": "Gets a ticket", "features": ["e-ticket", "confirm-email"] },
+        { "title": "Boards", "features": ["scan"] }
+      ]
+    }
+  ],
+  "questions": [
+    { "question": "Is cabin selection still part of this release?", "why": "The kickoff interview mentions it, but no plan ticket or code does.", "since": "2026-11-12" }
+  ],
+  "pending": [
+    { "title": "Gift cards", "note": "Found in code at src/payments/giftcard.ts but not in any plan.", "source": "Code, 12 Nov" }
+  ],
+  "parked": [
+    { "title": "Loyalty points", "note": "Dropped by the client on 4 Nov." }
+  ]
+}

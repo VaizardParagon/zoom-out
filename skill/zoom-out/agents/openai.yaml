@@ -1,0 +1,5 @@
+interface:
+  display_name: "Zoom Out"
+  short_description: "Show the whole system and where it stands"
+policy:
+  allow_implicit_invocation: false

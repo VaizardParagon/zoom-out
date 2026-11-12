@@ -1,0 +1,403 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one column of bordered cards on near-black, in the shadcn/ui manner (thin borders, squared controls, white as the primary).
+     One deliberate dark look. Status is traffic-light: red not started, amber in progress, green in three strengths for built, tested, live.
+     "Blocked" is a white ring over whatever step a feature has reached. Everything is drawn from the map data at the foot of this file. */
+  :root {
+    color-scheme: dark;
+    --bg: #050505; --card: #0c0c0c; --card-2: #161616; --fg: #fafafa; --muted: #a3a3a3; --line: #272727;
+    --none: #ef4444; --prog: #f59e0b; --built: #14532d; --built-line: #22c55e; --tested: #16a34a; --live: #4ade80;
+    --ring: #fafafa; --accent: #3b82f6;
+    --r-card: 10px; --r-ctl: 2px;
+    --body: "Geist", "Segoe UI", Arial, sans-serif;
+    --mono: "Geist Mono", Consolas, "Courier New", monospace;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+  .page {
+    max-width: 1080px; margin: 0 auto; padding-block: 32px 64px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  h1, h2, h3, p, ol, ul { margin: 0; }
+  ol, ul { padding: 0; list-style: none; }
+  header { display: flex; flex-direction: column; gap: 12px; padding: 8px 0 12px; min-width: 0; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  @media (max-width: 560px) { section { padding: 16px; } }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1.08; font-weight: 700; letter-spacing: -.02em; text-wrap: balance; }
+  h2 { font-size: 20px; line-height: 1.25; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+  h3 { font-size: 15px; font-weight: 600; }
+  .about { font-size: 17px; color: var(--muted); max-width: 66ch; }
+  .muted { color: var(--muted); font-size: 14px; max-width: 70ch; }
+  .lead { font-size: 17px; font-weight: 600; max-width: 60ch; text-wrap: balance; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--mono); font-size: 12px; }
+  .facts li { border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 2px 8px; color: var(--muted); background: var(--card); }
+  a { color: inherit; text-underline-offset: 3px; }
+
+  /* status */
+  .s0 { --c: var(--none); --b: var(--none); --t: #ffffff; }
+  .s1 { --c: var(--prog); --b: var(--prog); --t: #1a1000; }
+  .s2 { --c: var(--built); --b: var(--built-line); --t: var(--fg); }
+  .s3 { --c: var(--tested); --b: var(--tested); --t: #03170b; }
+  .s4 { --c: var(--live); --b: var(--live); --t: #03170b; }
+  .sq { width: 14px; height: 14px; border-radius: var(--r-ctl); box-sizing: border-box; flex: none; display: block; padding: 0; background: var(--c); border: 1.5px solid var(--b); transition: opacity .15s; }
+  .sq.bl { box-shadow: 0 0 0 1.5px var(--bg), 0 0 0 3.5px var(--ring); }
+  .sq.ring { background: transparent; border-color: var(--line); }
+  button.sq { cursor: pointer; }
+  button.sq:hover, button.sq:focus-visible, button.sq.on { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: var(--r-ctl); border: 1px solid var(--line); white-space: nowrap; }
+  .badge.solid { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .badge .sq { width: 9px; height: 9px; }
+
+  /* status tiles: click one to light up every feature at that step */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
+  .tile { font: inherit; color: inherit; text-align: left; cursor: pointer; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card);
+    padding: 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .tile:hover { background: var(--card-2); }
+  .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tile[aria-pressed="true"] { border-color: var(--fg); background: var(--card-2); }
+  .tile b { font-size: 30px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .tile span { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+  .tile .sq { width: 11px; height: 11px; }
+  #app[data-f="s0"] .mark:not(.s0), #app[data-f="s1"] .mark:not(.s1), #app[data-f="s2"] .mark:not(.s2),
+  #app[data-f="s3"] .mark:not(.s3), #app[data-f="s4"] .mark:not(.s4), #app[data-f="bl"] .mark:not(.bl) { opacity: .13; }
+
+  /* the whole scope */
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+  @media (max-width: 760px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+  .blocks { display: flex; flex-wrap: wrap; gap: 24px 30px; }
+  .blk { display: flex; flex-direction: column; gap: 9px; max-width: 150px; }
+  .blk h3 { font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); line-height: 1.3; overflow-wrap: anywhere; }
+  .blk div { display: grid; grid-template-columns: repeat(4, 24px); gap: 8px; }
+  .blk .sq { width: 24px; height: 24px; }
+  .panel { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px; display: flex; flex-direction: column; gap: 8px; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); min-height: 150px; min-width: 0; max-height: 70vh; overflow-y: auto; }
+  .where { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .panel p { font-size: 14px; overflow-wrap: anywhere; }
+  .who { font-size: 14px; }
+  .who code { font-family: var(--mono); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+
+  /* system diagram */
+  .scroll { overflow-x: auto; }
+  .dg { width: 100%; height: auto; display: block; }
+  .dg text { font-family: var(--body); fill: var(--fg); }
+  .dg .band { font-family: var(--mono); font-size: 11px; fill: var(--muted); letter-spacing: .08em; }
+  .dg .rule { stroke: var(--line); stroke-width: 1; }
+  .dg .box { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+  .dg .ext .box { fill: transparent; stroke-dasharray: 5 4; stroke: var(--muted); }
+  .dg .node { cursor: pointer; }
+  .dg .node:focus { outline: none; }
+  .dg .node:hover .box, .dg .node.on .box, .dg .node:focus-visible .box { stroke: var(--fg); stroke-width: 2; }
+  .dg .tt { font-size: 13px; font-weight: 600; }
+  .dg .cap { font-size: 11.5px; fill: var(--muted); }
+  .dg .q { fill: var(--c); stroke: var(--b); stroke-width: 1.5; transition: opacity .15s; }
+  .dg .q.bl { stroke: var(--ring); stroke-width: 2.5; }
+  .dg .ln { stroke: var(--muted); stroke-width: 1.5; }
+  .dg .ah { fill: var(--muted); }
+  .dg .av { fill: var(--card-2); stroke: var(--line); }
+  .dg .avt { fill: var(--fg); font-size: 9px; font-weight: 600; font-family: var(--mono); }
+  .inline { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+  .feat { display: flex; flex-direction: column; gap: 10px; }
+  .feat li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 2px 10px; font-size: 14px; line-height: 1.4; }
+  .feat li .sq { width: 11px; height: 11px; margin-top: 4px; }
+  .feat .nx { grid-column: 2; color: var(--muted); font-size: 13px; }
+
+  /* flows */
+  .flow { display: flex; flex-direction: column; gap: 10px; }
+  .flow + .flow { margin-top: 14px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .lane { display: grid; grid-template-columns: 9em minmax(0, 1fr); gap: 4px 16px; align-items: center; }
+  .lane.solo { grid-template-columns: minmax(0, 1fr); }
+  .lname { font-weight: 600; font-size: 14px; line-height: 1.25; }
+  .lane .reach, .lane .named { grid-column: -2 / -1; }
+  @media (max-width: 560px) { .lane { grid-template-columns: minmax(0, 1fr); } }
+  .segs { display: flex; gap: 3px; min-width: 0; }
+  .seg { flex: 1 1 0; min-width: 0; height: 34px; border-radius: var(--r-ctl); background: var(--c); border: 1.5px solid var(--b); color: var(--t); box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .seg.bl { box-shadow: inset 0 0 0 3px var(--ring); border-color: var(--ring); }
+  .brk { flex: 0 0 16px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); color: var(--fg); font-weight: 500; }
+  .named { display: flex; gap: 3px; }
+  .named span { flex: 1 1 0; min-width: 0; font-size: 12.5px; color: var(--muted); line-height: 1.25; overflow-wrap: anywhere; }
+  .named span.gap { flex: 0 0 16px; }
+  @media (max-width: 640px) { .named { display: none; } }
+  .reach { font-size: 14px; color: var(--muted); }
+  .reach b { color: var(--fg); font-weight: 600; }
+  details summary { cursor: pointer; }
+  details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .more { font-size: 13px; color: var(--muted); }
+  .steps { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 4px; }
+  .steps li { display: grid; grid-template-columns: 1.8em minmax(0, 1fr); gap: 2px 8px; font-size: 14px; }
+  .steps .n { font-family: var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* short lists: who is working, blockers, next steps */
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .col { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--bg); padding: 14px 16px; min-width: 0; }
+  .col .cnt { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .col ul { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }
+  .col li { font-size: 14px; color: var(--muted); line-height: 1.4; overflow-wrap: anywhere; }
+  .col li strong { color: var(--fg); font-weight: 600; }
+  .person { display: flex; align-items: center; gap: 10px; }
+  .person i { width: 30px; height: 30px; border-radius: 50%; background: var(--card-2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-style: normal; font-family: var(--mono); font-size: 11px; font-weight: 600; flex: none; }
+  .recap { font-size: 16px; line-height: 1.6; max-width: 70ch; }
+  .next { display: flex; flex-direction: column; gap: 14px; counter-reset: n; max-width: 78ch; }
+  .next li { display: grid; grid-template-columns: 1.8em minmax(0, 1fr); gap: 2px 8px; counter-increment: n; }
+  .next li::before { content: counter(n); font-family: var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .next .st { font-weight: 600; }
+  .next .st code { font-family: var(--mono); font-size: 12px; font-weight: 400; margin-left: 8px; padding: 2px 8px; border: 1px solid var(--line); border-radius: var(--r-ctl); background: var(--card-2); white-space: nowrap; }
+  .next .wy { grid-column: 2; color: var(--muted); font-size: 14px; }
+  /* things that need an answer: the item on the left, the answer box on the right */
+  .acts { display: flex; flex-direction: column; }
+  .act { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 340px); gap: 8px 24px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start; }
+  .acts > .act:first-child { border-top: 0; padding-top: 4px; }
+  @media (max-width: 720px) { .act { grid-template-columns: minmax(0, 1fr); } }
+  .act .it { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+  .act .ttl { font-weight: 600; }
+  .act .ttl .n { font-family: var(--mono); color: var(--muted); font-weight: 400; margin-right: 8px; font-variant-numeric: tabular-nums; }
+  .act .ttl code { font-family: var(--mono); font-size: 12px; font-weight: 400; margin-left: 8px; padding: 2px 8px; border: 1px solid var(--line); border-radius: var(--r-ctl); background: var(--card-2); white-space: nowrap; }
+  .act .nt { color: var(--muted); font-size: 14px; }
+  .ans { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .ans textarea, #copybox { font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 8px 10px; width: 100%; box-sizing: border-box; min-height: 38px; resize: vertical; }
+  .ans textarea:focus-visible, #copybox:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .ans textarea.has { border-color: var(--fg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip, .btn { font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 3px 9px; }
+  .chip:hover { background: var(--card-2); }
+  .chip:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn { font-size: 14px; font-weight: 600; padding: 8px 16px; background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); font-weight: 500; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .grp { border-top: 1px solid var(--line); padding-top: 12px; }
+  .grp .cnt { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 8px; }
+  .grp .acts { padding-top: 6px; }
+  .outlist { display: flex; flex-direction: column; gap: 10px; }
+  .outlist li { font-size: 14px; color: var(--muted); max-width: 80ch; overflow-wrap: anywhere; }
+  .outlist li strong { color: var(--fg); font-weight: 600; display: block; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .plain { display: flex; flex-direction: column; gap: 7px; }
+  .plain li { font-size: 14px; color: var(--muted); max-width: 72ch; }
+  .plain li strong { color: var(--fg); font-weight: 600; }
+  .aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  footer { padding: 16px 4px 0; display: flex; flex-direction: column; gap: 8px; }
+  @media (prefers-reduced-motion: reduce) { .sq, .dg .q { transition: none; } }
+</style>
+
+<div id="app"></div>
+<script id="map-data" type="application/json">__MAP_JSON__</script>
+<script>
+const M = JSON.parse(document.getElementById('map-data').textContent);
+const ORDER = ['none', 'progress', 'built', 'tested', 'live'];
+const LBL = { none: 'Not started', progress: 'In progress', built: 'Built', tested: 'Works in testing', live: 'Proven live' };
+const BK = { decision: 'Waiting on a decision', off: 'Switched off', build: 'Needs something not built yet' };
+const LADDER = M.hasLive === false ? ORDER.slice(0, 4) : ORDER;
+
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const day = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[3]} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1]} ${m[1]}` : esc(iso || ''); };
+const si = f => Math.max(0, ORDER.indexOf(f.status));
+const init = n => String(n).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const F = M.features || [], BY = {}, PB = {};
+const PARTS = (M.parts || []).slice().sort((a, b) => a.band - b.band || a.col - b.col);
+PARTS.forEach(p => { PB[p.id] = p; p.fs = []; });
+F.forEach(f => { BY[f.id] = f; if (PB[f.part]) PB[f.part].fs.push(f); });
+const count = s => F.filter(f => f.status === s).length;
+const blocked = F.filter(f => f.blocked);
+const working = F.filter(f => f.work && f.work.who && f.status === 'progress');
+const assigned = F.filter(f => f.work && f.work.who);
+
+const cls = f => `s${si(f)}${f.blocked ? ' bl' : ''}`;
+const label = f => `${f.title}. ${LBL[f.status]}${f.blocked ? ', blocked' : ''}`;
+const sqBtn = f => `<button class="sq mark ${cls(f)}" data-k="${esc(f.id)}" title="${esc(label(f))}" aria-label="${esc(label(f))}"></button>`;
+const sqI = f => `<i class="sq ${cls(f)}"></i>`;
+const badges = f => `<span class="badges"><span class="badge"><i class="sq s${si(f)}"></i>${LBL[f.status]}</span>${f.blocked ? `<span class="badge solid">${BK[f.blocked.kind] || 'Blocked'}</span>` : ''}</span>`;
+const who = f => { const w = f.work; if (!w || !w.who) return '';
+  const t = w.ticket ? (w.url ? `<a href="${esc(w.url)}">${esc(w.ticket)}</a>` : esc(w.ticket)) : '';
+  return `<span class="who"><strong>${esc(w.who)}</strong>${t ? ' · ' + t : ''}${w.branch ? ` · <code>${esc(w.branch)}</code>` : ''}</span>`; };
+
+function detail(f) {
+  if (!f) return `<p class="where">Detail</p><p class="muted">Pick a square to see what it is and where it stands. Pick a count above to light up every feature at that step.</p>`;
+  const p = PB[f.part];
+  return `<p class="where">${esc(p ? p.title : '')}</p><h3>${esc(f.title)}</h3>${badges(f)}
+    ${f.blocked && f.blocked.note ? `<p>${esc(f.blocked.note)}</p>` : ''}
+    <p>${esc(f.evidence || (f.status === 'none' ? 'Nothing exists yet.' : ''))}</p>
+    ${f.next ? `<p><strong>Next:</strong> ${esc(f.next)}</p>` : ''}${who(f)}
+    ${f.source ? `<p class="where">Promised in: ${esc(f.source)}</p>` : ''}
+    <p class="where">${f.checked === M.updated ? 'Checked ' + day(f.checked) : 'Not rechecked since ' + day(f.checked)}</p>`;
+}
+function listFor(key) {
+  const fs = key === 'bl' ? blocked : F.filter(f => 's' + si(f) === key);
+  const name = key === 'bl' ? 'Blocked' : LBL[ORDER[+key.slice(1)]];
+  return `<p class="where">${fs.length} ${fs.length === 1 ? 'feature' : 'features'}</p><h3>${name}</h3>
+    <ul class="feat">${fs.map(f => `<li>${sqI(f)}<span>${esc(f.title)}</span><span class="nx">${esc(PB[f.part] ? PB[f.part].title : '')}${key === 'bl' ? ' · ' + (BK[f.blocked.kind] || 'Blocked') : ''}</span></li>`).join('')}</ul>`;
+}
+function partDetail(id) {
+  const p = PB[id];
+  if (!p) return `<p class="muted">Pick a box to see its features and who is on them.</p>`;
+  return `<p class="where">${esc((M.bands || [])[p.band] || '')}</p><h3>${esc(p.title)}</h3>${p.note ? `<p>${esc(p.note)}</p>` : ''}
+    <ul class="feat">${p.fs.map(f => `<li>${sqI(f)}<span>${esc(f.title)}</span><span class="nx">${LBL[f.status]}${f.blocked ? ' · ' + (BK[f.blocked.kind] || 'Blocked') : ''}${who(f) ? ' · ' + who(f) : ''}</span></li>`).join('')}</ul>`;
+}
+
+/* flows: a step is as far along as its least-proven feature */
+function laneSteps(flow, lane) {
+  return (flow.steps || []).map((st, i) => {
+    const fs = Array.isArray(st.features) ? st.features : lane ? st.features[lane] : [].concat(...Object.values(st.features || {}));
+    return { n: i + 1, t: st.title, fs: (fs || []).map(k => BY[k]).filter(Boolean) };
+  }).filter(x => x.fs.length).map(x => {
+    const low = x.fs.reduce((a, f) => si(f) < si(a) ? f : a), bl = x.fs.find(f => f.blocked);
+    return { n: x.n, t: x.t, s: si(low), bl, why: bl ? `${BK[bl.blocked.kind] || 'Blocked'}: ${bl.title}` : (si(low) < 3 ? `${LBL[low.status]}: ${low.title}` : '') };
+  });
+}
+function lane(flow, name) {
+  const st = laneSteps(flow, name);
+  if (!st.length) return '';
+  let cut = st.findIndex(x => x.s < 3 || x.bl); if (cut < 0) cut = st.length;
+  const track = `<div class="segs">${st.map((x, i) => `${i === cut ? '<div class="brk" aria-hidden="true">//</div>' : ''}<div class="seg s${x.s}${x.bl ? ' bl' : ''}" title="${esc(x.t + '. ' + LBL[ORDER[x.s]])}"><span>${x.n}</span></div>`).join('')}</div>`;
+  const reach = cut >= st.length ? '<b>Works end to end in testing.</b>'
+    : `<b>${cut ? `Works in testing up to step ${st[cut - 1].n}.` : 'Does not get past the first step.'}</b> Stops at "${esc(st[cut].t)}". ${esc(st[cut].why)}.`;
+  const named = name ? '' : `<div class="named">${st.map((x, i) => `${i === cut ? '<span class="gap"></span>' : ''}<span>${esc(x.t)}</span>`).join('')}</div>`;
+  return `<div class="lane${name ? '' : ' solo'}">${name ? `<div class="lname">${esc(name)}</div>` : ''}${track}${named}<p class="reach">${reach}</p></div>`;
+}
+const flowHtml = fl => `<div class="flow"><h3>${esc(fl.title)}</h3>${(fl.lanes && fl.lanes.length ? fl.lanes : [null]).map(n => lane(fl, n)).join('')}
+  <details><summary class="more">The ${fl.steps.length} steps</summary><ol class="steps">${fl.steps.map((s, i) => `<li><span class="n">${i + 1}</span><span>${esc(s.title)}</span></li>`).join('')}</ol></details></div>`;
+
+/* diagram: boxes sit in a band (row) and a column; arrows run centre to centre, clipped at the box edges */
+function diagram() {
+  const W = 156, GX = 28, PITCH = W + GX, PAD = 8, PER = 9;
+  const bands = M.bands || [], cols = Math.max(1, ...PARTS.map(p => p.col + 1));
+  const hOf = p => 30 + Math.ceil(p.fs.length / PER) * 14 + 32;
+  const pos = {}; let y = 0; const rows = [];
+  bands.forEach((b, bi) => {
+    const ps = PARTS.filter(p => p.band === bi); if (!ps.length) return;
+    const h = Math.max(78, ...ps.map(hOf));
+    rows.push({ b, y });
+    ps.forEach(p => pos[p.id] = { x: PAD + p.col * PITCH, y: y + 24, w: W, h });
+    y += 24 + h + 30;
+  });
+  const width = PAD * 2 + cols * PITCH - GX, height = y - 14;
+  const edge = (r, tx, ty) => { const cx = r.x + r.w / 2, cy = r.y + r.h / 2, dx = tx - cx, dy = ty - cy;
+    const t = Math.min(dx ? (r.w / 2) / Math.abs(dx) : Infinity, dy ? (r.h / 2) / Math.abs(dy) : Infinity); return [cx + dx * t, cy + dy * t]; };
+  const lines = (M.links || []).map(([a, b]) => {
+    const A = pos[a], B = pos[b]; if (!A || !B) return '';
+    const [x1, y1] = edge(A, B.x + B.w / 2, B.y + B.h / 2), [ex, ey] = edge(B, A.x + A.w / 2, A.y + A.h / 2);
+    const len = Math.hypot(ex - x1, ey - y1) || 1, x2 = ex - (ex - x1) / len * 3, y2 = ey - (ey - y1) / len * 3;
+    return `<line class="ln" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arr)"/>`;
+  }).join('');
+  const nodes = PARTS.filter(p => pos[p.id]).map(p => {
+    const r = pos[p.id], ppl = [...new Set(p.fs.filter(f => f.work && f.work.who).map(f => f.work.who))].slice(0, 3);
+    const title = p.title.length > 21 ? p.title.slice(0, 20) + '…' : p.title;
+    return `<g class="node${p.external ? ' ext' : ''}" data-p="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.title)}" transform="translate(${r.x},${r.y})">
+      <title>${esc(p.title)}</title><rect class="box" width="${r.w}" height="${r.h}" rx="6"/><text class="tt" x="10" y="21">${esc(title)}</text>
+      ${p.fs.map((f, i) => `<rect class="q mark ${cls(f)}" x="${10 + (i % PER) * 14}" y="${33 + Math.floor(i / PER) * 14}" width="11" height="11" rx="1.5"/>`).join('')}
+      <text class="cap" x="10" y="${r.h - 14}">${p.external ? 'Outside service' : p.fs.length + (p.fs.length === 1 ? ' feature' : ' features')}</text>
+      ${ppl.map((n, i) => `<circle class="av" cx="${r.w - 16 - i * 22}" cy="${r.h - 18}" r="10"/><text class="avt" x="${r.w - 16 - i * 22}" y="${r.h - 15}" text-anchor="middle">${esc(init(n))}</text>`).join('')}</g>`;
+  }).join('');
+  return `<div class="scroll"><svg class="dg" style="min-width:${Math.min(width, cols * 128)}px;max-width:${Math.round(width * 1.35)}px" viewBox="0 0 ${width} ${height}" role="group" aria-label="System diagram">
+    <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+    ${rows.map((r, i) => `${i ? `<line class="rule" x1="0" x2="${width}" y1="${r.y - 10}" y2="${r.y - 10}"/>` : ''}<text class="band" x="${PAD}" y="${r.y + 12}">${esc(String(r.b).toUpperCase())}</text>`).join('')}${lines}${nodes}</svg></div>`;
+}
+
+/* every item that needs an answer gets a box; ITEMS keeps them in page order for the copy text */
+const ITEMS = [];
+const CHIPS = { block: ['Unblocked now', 'Still blocked'], q: ['Yes', 'No'], next: ['Go', 'Not now'], pending: ['Add it', 'Leave it out'] };
+function act(type, id, kind, title, note, extra) {
+  const key = (type + '-' + id).replace(/[^A-Za-z0-9_-]/g, '-');
+  ITEMS.push({ key, kind, title, note, ref: type === 'block' ? id : '' });
+  return `<li class="act"><div class="it"><span class="ttl">${extra && extra.n ? `<span class="n">${extra.n}</span>` : ''}${esc(title)}${extra && extra.skill ? `<code>${esc(extra.skill)}</code>` : ''}</span>${note ? `<span class="nt">${esc(note)}</span>` : ''}${extra && extra.since && extra.since !== M.updated ? `<span class="where">Open since ${day(extra.since)}</span>` : ''}</div>
+    <div class="ans"><textarea id="a-${key}" data-a="${key}" rows="1" placeholder="Your answer" aria-label="Your answer: ${esc(title)}"></textarea><div class="chips">${CHIPS[type].map(c => `<button class="chip" type="button" data-fill="${key}">${c}</button>`).join('')}</div></div></li>`;
+}
+
+const section = (on, html) => on ? `<section>${html}</section>` : '';
+const tile = (key, n, text, sw) => `<button class="tile" data-f="${key}" aria-pressed="false"><b>${n}</b><span>${sw}${text}</span></button>`;
+function page() {
+  const stale = F.filter(f => f.checked !== M.updated).length;
+  const byWho = {}; working.forEach(f => (byWho[f.work.who] = byWho[f.work.who] || []).push(f));
+  const src = M.sources || {};
+  return `<div class="page">
+    <header>
+      <p class="eyebrow">System map · ${day(M.updated)}</p>
+      <h1>${esc(M.project)}</h1>
+      ${M.about ? `<p class="about">${esc(M.about)}</p>` : ''}
+      ${(M.facts || []).length ? `<ul class="facts">${M.facts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    </header>
+    <div class="tiles">${tile('', F.length, 'features promised', '')}${LADDER.map(s => tile('s' + ORDER.indexOf(s), count(s), LBL[s].toLowerCase(), `<i class="sq s${ORDER.indexOf(s)}"></i>`)).join('')}${blocked.length ? tile('bl', blocked.length, 'blocked', '<i class="sq ring bl"></i>') : ''}</div>
+    ${section(M.recap, `<h2>Where we are</h2><p class="recap">${esc(M.recap)}</p>`)}
+    <section><h2>Everything promised</h2><p class="muted">One square is one feature, grouped by the part of the system it belongs to.</p><div class="hero"><div class="blocks">${PARTS.filter(p => p.fs.length).map(p => `<div class="blk"><h3>${esc(p.title)}</h3><div>${p.fs.map(sqBtn).join('')}</div></div>`).join('')}</div><div class="panel" data-detail>${detail()}</div></div></section>
+    ${section(PARTS.length, `<h2>How the system fits together</h2><p class="muted">One box is a screen or a part working in the background. The squares are its features.${assigned.length ? ` Initials show who is assigned to it in ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}.` : ''}</p>${diagram()}<div class="inline" data-pdetail>${partDetail()}</div>`)}
+    ${section((M.flows || []).length, `<h2>How far a person can get</h2><p class="lead">${esc(M.headline || '')}</p>${(M.flows || []).map(flowHtml).join('')}`)}
+    ${section(working.length, `<h2>Being worked on now</h2><p class="muted">Assignees from ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}, as of ${day(M.updated)}.</p><div class="cols">${Object.keys(byWho).map(n => `<div class="col"><div class="person"><i>${esc(init(n))}</i><h3>${esc(n)}</h3></div><ul>${byWho[n].map(f => `<li><strong>${esc(f.title)}.</strong> ${esc(f.work.ticket || f.work.branch || '')}</li>`).join('')}</ul></div>`).join('')}</div>`)}
+    ${section(blocked.length, `<h2>What is holding things up</h2><p class="muted">Blocked features have a white ring in the squares above. Write what should happen next to any of them.</p>${Object.keys(BK).map(k => { const fs = blocked.filter(f => f.blocked.kind === k); return fs.length ? `<details class="grp"${k === 'decision' ? ' open' : ''}><summary><h3 style="display:inline">${BK[k]}</h3><span class="cnt">${fs.length} ${fs.length === 1 ? 'feature' : 'features'}${k === 'build' ? ' · the only kind that is coding' : ''}</span></summary><ul class="acts">${fs.map(f => act('block', f.id, 'Blocker (' + BK[k] + ')', f.title, f.blocked.note, { since: f.blocked.since })).join('')}</ul></details>` : ''; }).join('')}`)}
+    ${section((M.questions || []).length, `<h2>Questions for you</h2><p class="muted">Things the map could not settle from the code, the plan or the tracker.</p><ul class="acts">${(M.questions || []).map((x, i) => act('q', i + 1, 'Question', x.question, x.why, { since: x.since })).join('')}</ul>`)}
+    ${section((M.nextSteps || []).length, `<h2>Suggested next steps</h2><ul class="acts">${(M.nextSteps || []).map((x, i) => act('next', i + 1, 'Next step ' + (i + 1), x.step, x.why, { n: i + 1, skill: x.skill })).join('')}</ul>`)}
+    ${section((M.pending || []).length, `<h2>Waiting for your OK</h2><p class="muted">Found since the last run. Not part of the promise until you say so.</p><ul class="acts">${(M.pending || []).map((x, i) => act('pending', i + 1, 'Waiting for OK', x.title, (x.note || '') + (x.source ? ` (${x.source})` : ''), { since: x.since })).join('')}</ul>`)}
+    ${section(ITEMS.length, `<h2>Your answers</h2><p class="muted">Everything you answered above, in one place. Copy it, then paste it to your agent after typing /zoom-out. Answer as many or as few as you like: anything left empty stays open and comes back on the next map.</p><p class="where" id="prog"></p><ol class="outlist" id="outlist"></ol>
+      <div class="row"><button class="btn" id="copy" type="button" disabled>Copy answers</button><button class="btn ghost" id="clear" type="button" disabled>Clear all</button><span class="muted" id="copied" role="status"></span></div><textarea id="copybox" rows="8" readonly hidden aria-label="Answers to copy"></textarea>`)}
+    ${section((M.parked || []).length, `<h2>Not in this release</h2><ul class="plain">${(M.parked || []).map(x => `<li><strong>${esc(x.title)}.</strong> ${esc(x.note || '')}</li>`).join('')}</ul>`)}
+    <footer><p class="muted"><strong>Where this comes from.</strong> ${src.scope ? 'Scope: ' + esc(src.scope) + ' ' : ''}${src.status ? 'Status: ' + esc(src.status) : ''}</p>
+      <p class="muted">A snapshot from ${day(M.updated)}. ${stale ? `${stale} ${stale === 1 ? 'feature was' : 'features were'} not rechecked that day.` : 'Every feature was rechecked that day.'}</p></footer>
+  </div>`;
+}
+
+const app = document.getElementById('app');
+app.innerHTML = page();
+function pickPart(n) {
+  app.querySelectorAll('.node.on').forEach(x => x.classList.remove('on'));
+  n.classList.add('on');
+  app.querySelector('[data-pdetail]').innerHTML = partDetail(n.dataset.p);
+}
+function setFilter(key) {
+  if (app.dataset.f === key) key = '';
+  if (key) app.dataset.f = key; else delete app.dataset.f;
+  app.querySelectorAll('.tile').forEach(t => t.setAttribute('aria-pressed', String(!!key && t.dataset.f === key)));
+  app.querySelectorAll('button.sq.on').forEach(x => x.classList.remove('on'));
+  app.querySelector('[data-detail]').innerHTML = key ? listFor(key) : detail();
+}
+/* answers: kept in this browser between visits to the same map, gathered into one text to copy */
+const STORE = 'zoom-out:' + M.project + ':' + M.updated;
+const box = key => document.getElementById('a-' + key);
+function answersText() {
+  const done = ITEMS.filter(it => box(it.key) && box(it.key).value.trim());
+  return [`Answers for /zoom-out · ${M.project} · map of ${M.updated}`, '',
+    ...done.map(it => `${it.kind}: ${it.title}${it.ref ? ` [${it.ref}]` : ''}\n${it.note ? `Context: ${it.note}\n` : ''}Answer: ${box(it.key).value.trim()}\n`)].join('\n');
+}
+function syncAnswers(save) {
+  const out = document.getElementById('outlist'); if (!out) return;
+  const done = ITEMS.filter(it => box(it.key).value.trim()), vals = {};
+  ITEMS.forEach(it => { const b = box(it.key); b.classList.toggle('has', !!b.value.trim()); if (b.value.trim()) vals[it.key] = b.value; });
+  out.innerHTML = done.length ? done.map(it => `<li><strong>${esc(it.kind)}: ${esc(it.title)}</strong>${esc(box(it.key).value.trim())}</li>`).join('') : '<li>Nothing answered yet.</li>';
+  document.getElementById('copy').disabled = document.getElementById('clear').disabled = !done.length;
+  document.getElementById('copy').textContent = done.length ? `Copy ${done.length} ${done.length === 1 ? 'answer' : 'answers'}` : 'Copy answers';
+  document.getElementById('prog').textContent = `${done.length} of ${ITEMS.length} answered`;
+  document.getElementById('copied').textContent = '';
+  document.getElementById('copybox').hidden = true;
+  if (save) { try { localStorage.setItem(STORE, JSON.stringify(vals)); } catch (e) { /* answers still work without storage */ } }
+}
+if (ITEMS.length) {
+  try { const saved = JSON.parse(localStorage.getItem(STORE) || '{}'); ITEMS.forEach(it => { if (saved[it.key]) box(it.key).value = saved[it.key]; }); } catch (e) { /* start empty */ }
+  syncAnswers(false);
+  app.addEventListener('input', e => { if (e.target.matches('textarea[data-a]')) syncAnswers(true); });
+}
+function copyAnswers() {
+  const text = answersText(), note = document.getElementById('copied'), cb = document.getElementById('copybox');
+  const fallback = () => { cb.value = text; cb.hidden = false; cb.focus(); cb.select(); note.textContent = 'Select the text below and copy it.'; };
+  try { navigator.clipboard.writeText(text).then(() => { note.textContent = 'Copied. Paste it to your agent.'; }, fallback); } catch (e) { fallback(); }
+}
+
+app.addEventListener('click', e => {
+  const chip = e.target.closest('.chip[data-fill]');
+  if (chip) { const b = box(chip.dataset.fill); b.value = chip.textContent; b.focus(); return syncAnswers(true); }
+  if (e.target.closest('#copy')) return copyAnswers();
+  if (e.target.closest('#clear')) { ITEMS.forEach(it => { box(it.key).value = ''; }); return syncAnswers(true); }
+  const t = e.target.closest('.tile');
+  if (t) return setFilter(t.dataset.f);
+  const n = e.target.closest('.node[data-p]');
+  if (n) return pickPart(n);
+  const b = e.target.closest('button.sq[data-k]'); if (!b) return;
+  app.querySelectorAll('button.sq.on').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  app.querySelector('[data-detail]').innerHTML = detail(BY[b.dataset.k]);
+});
+app.addEventListener('keydown', e => {
+  const n = e.target.closest('.node[data-p]');
+  if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPart(n); }
+});
+</script>

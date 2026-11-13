@@ -12,6 +12,8 @@
 | `headline` | One plain sentence: how far a real user gets today and where they stop. |
 | `recap` | One short paragraph: what happened since the last run and where that leaves the project. Shown as "Where we are". **Checked:** required. |
 | `nextSteps` | One to five suggested moves, most valuable first. Each has `step`, `why`, and optional `skill` (a slash command such as `/to-questionnaire`). **Checked.** |
+| `people` | Everyone who has worked in the repo, each with `name`, `now` (ids of the features they are on right now) and `trail` (their work history: entries of `date`, `summary`, `features`). The page's picker switches between them. **Checked:** names are unique and every id exists. |
+| `runBy` | The `name` of the person who ran this map. The picker starts on them. **Checked:** is one of `people`. |
 | `facts` | Optional short chips under the counts, for conditions that colour everything else: the live build, "Email off". |
 | `hasLive` | `false` when the project has no live site. The ladder then tops out at `tested`. |
 | `tracker` | `"linear"`, `"github"` or `null`. |

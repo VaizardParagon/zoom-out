@@ -33,6 +33,18 @@ const since = (x, where) => need(!x || x.since == null || iso(x.since), `${where
 (M.questions || []).forEach((q, i) => { need(q && q.question, `questions ${i + 1}: needs question`); since(q, `questions ${i + 1}`); });
 (M.pending || []).forEach((p, i) => { need(p && p.title, `pending ${i + 1}: needs title`); since(p, `pending ${i + 1}`); });
 (M.features || []).forEach(f => since(f.blocked, `feature ${f.id}, blocked`));
+const known = id => (M.features || []).some(f => f.id === id);
+(M.people || []).forEach((p, i) => {
+  const n = `people ${i + 1}${p && p.name ? ` (${p.name})` : ''}`;
+  need(p && p.name, `${n}: needs name`);
+  ((p && p.now) || []).forEach(id => need(known(id), `${n}: now has feature "${id}", which does not exist`));
+  ((p && p.trail) || []).forEach(t => {
+    need(iso(t.date) && t.summary && Array.isArray(t.features), `${n}: each trail entry needs date, summary and features`);
+    (t.features || []).forEach(id => need(known(id), `${n}: trail has feature "${id}", which does not exist`));
+  });
+});
+dupes((M.people || []).map(p => p && p.name), 'person');
+need(!M.runBy || (M.people || []).some(p => p.name === M.runBy), 'runBy: must be the name of one of people');
 need(Array.isArray(M.bands) && M.bands.length, 'bands: need at least one');
 need(Array.isArray(M.parts) && M.parts.length, 'parts: need at least one');
 need(Array.isArray(M.features) && M.features.length, 'features: need at least one');

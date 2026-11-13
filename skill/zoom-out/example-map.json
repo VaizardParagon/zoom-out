@@ -10,6 +10,23 @@
     { "step": "Write tests for scanning tickets at the ramp.", "why": "The booking flow ends at boarding, and that step is built but not proven.", "skill": "/tdd" },
     { "step": "Plan group booking with the client's notes.", "why": "It was promised on 4 Nov and has no plan and no code.", "skill": "/grill-with-docs" }
   ],
+  "runBy": "Maya R",
+  "people": [
+    { "name": "Maya R", "now": ["vouchers"], "trail": [
+      { "date": "2026-11-11", "summary": "Voucher codes at checkout.", "features": ["vouchers", "card-payment"] },
+      { "date": "2026-11-05", "summary": "QR code on the e-ticket.", "features": ["e-ticket"] },
+      { "date": "2026-09-18", "summary": "First version of crossing search.", "features": ["search-crossings"] }
+    ] },
+    { "name": "Sam K", "now": ["offline-scan"], "trail": [
+      { "date": "2026-11-10", "summary": "Scanning with no signal.", "features": ["offline-scan", "scan"] },
+      { "date": "2026-10-29", "summary": "Vehicle size check and its tests.", "features": ["vehicle-size"] },
+      { "date": "2026-09-30", "summary": "Booking confirmation email.", "features": ["confirm-email"] }
+    ] },
+    { "name": "Lena O", "now": [], "trail": [
+      { "date": "2026-11-03", "summary": "Refund code, waiting on the client's rule.", "features": ["refunds", "card-payment"] },
+      { "date": "2026-10-02", "summary": "Delay text message.", "features": ["delay-text"] }
+    ] }
+  ],
   "facts": ["Live build 4c1e9a0", "Text messages off"],
   "hasLive": true,
   "tracker": "linear",

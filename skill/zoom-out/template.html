@@ -9,7 +9,7 @@
     color-scheme: dark;
     --bg: #050505; --card: #0c0c0c; --card-2: #161616; --fg: #fafafa; --muted: #a3a3a3; --line: #272727;
     --none: #ef4444; --prog: #f59e0b; --built: #14532d; --built-line: #22c55e; --tested: #16a34a; --live: #4ade80;
-    --ring: #fafafa; --accent: #3b82f6;
+    --ring: #fafafa; --accent: #3b82f6; --last: #a78bfa; --last-bg: #2b2250; --last-fg: #ebe5ff;
     --r-card: 10px; --r-ctl: 2px;
     --body: "Geist", "Segoe UI", Arial, sans-serif;
     --mono: "Geist Mono", Consolas, "Courier New", monospace;
@@ -46,6 +46,31 @@
   .sq { width: 14px; height: 14px; border-radius: var(--r-ctl); box-sizing: border-box; flex: none; display: block; padding: 0; background: var(--c); border: 1.5px solid var(--b); transition: opacity .15s; }
   .sq.bl { box-shadow: 0 0 0 1.5px var(--bg), 0 0 0 3.5px var(--ring); }
   .sq.ring { background: transparent; border-color: var(--line); }
+  .sq.lw { outline: 2px solid var(--last); outline-offset: 2px; }
+  .sq.lwp { outline: 2px dashed var(--last); outline-offset: 2px; }
+  .sq.lwsw { background: transparent; border: 1.5px solid var(--last); outline: 0; }
+  .sq.lwsw.past { border-style: dashed; }
+  .lwnote { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 24px; }
+  .ini { display: flex; justify-content: center; }
+  .av { display: inline-flex; align-items: center; justify-content: center; width: 23px; height: 23px; border-radius: 50%; box-sizing: border-box; flex: none;
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600; font-style: normal; line-height: 1; letter-spacing: 0;
+    background: var(--last-bg); color: var(--last-fg); border: 1.5px solid var(--card); }
+  .ini .av + .av { margin-left: -9px; }
+  .trail .what { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; }
+  .ini:empty { display: none; }
+  /* who and when: the picker at the top right */
+  .bar { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px 14px; font-size: 13px; color: var(--muted); }
+  .bar label { display: flex; align-items: center; gap: 6px; }
+  .bar select, .bar input { font: inherit; font-size: 13px; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 5px 8px; }
+  .bar select:focus-visible, .bar input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .trailbox { display: flex; flex-direction: column; gap: 8px; }
+  .trail { display: flex; flex-direction: column; max-height: 244px; overflow-y: auto; border-top: 1px solid var(--line); }
+  .trail button { font: inherit; font-size: 13.5px; color: var(--muted); background: transparent; border: 0; border-bottom: 1px solid var(--line); text-align: left; padding: 7px 6px; cursor: pointer; display: grid; grid-template-columns: 7em minmax(0, 1fr); gap: 10px; align-items: center; }
+  .trail button:hover, .trail button[aria-pressed="true"] { background: var(--card-2); color: var(--fg); }
+  .trail button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .trail .d { font-family: var(--mono); font-size: 12px; }
+  .trail b { color: var(--fg); font-weight: 600; }
   button.sq { cursor: pointer; }
   button.sq:hover, button.sq:focus-visible, button.sq.on { outline: 2px solid var(--accent); outline-offset: 4px; }
   .badges { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -54,7 +79,7 @@
   .badge .sq { width: 9px; height: 9px; }
 
   /* status tiles: click one to light up every feature at that step */
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 10px; }
   .tile { font: inherit; color: inherit; text-align: left; cursor: pointer; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card);
     padding: 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .tile:hover { background: var(--card-2); }
@@ -64,15 +89,15 @@
   .tile span { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
   .tile .sq { width: 11px; height: 11px; }
   #app[data-f="s0"] .mark:not(.s0), #app[data-f="s1"] .mark:not(.s1), #app[data-f="s2"] .mark:not(.s2),
-  #app[data-f="s3"] .mark:not(.s3), #app[data-f="s4"] .mark:not(.s4), #app[data-f="bl"] .mark:not(.bl) { opacity: .13; }
+  #app[data-f="s3"] .mark:not(.s3), #app[data-f="s4"] .mark:not(.s4), #app[data-f="bl"] .mark:not(.bl), #app[data-f="lw"] .mark:not(.lw):not(.lwp), #app[data-f="trail"] .mark:not(.th) { opacity: .13; }
 
   /* the whole scope */
   .hero { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
   @media (max-width: 760px) { .hero { grid-template-columns: minmax(0, 1fr); } }
   .blocks { display: flex; flex-wrap: wrap; gap: 24px 30px; }
-  .blk { display: flex; flex-direction: column; gap: 9px; max-width: 150px; }
+  .blk { display: flex; flex-direction: column; gap: 9px; max-width: 160px; }
   .blk h3 { font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); line-height: 1.3; overflow-wrap: anywhere; }
-  .blk div { display: grid; grid-template-columns: repeat(4, 24px); gap: 8px; }
+  .blk div { display: grid; grid-template-columns: repeat(4, 24px); gap: 8px 14px; }
   .blk .sq { width: 24px; height: 24px; }
   .panel { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px; display: flex; flex-direction: column; gap: 8px; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); min-height: 150px; min-width: 0; max-height: 70vh; overflow-y: auto; }
   .where { font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -95,6 +120,10 @@
   .dg .cap { font-size: 11.5px; fill: var(--muted); }
   .dg .q { fill: var(--c); stroke: var(--b); stroke-width: 1.5; transition: opacity .15s; }
   .dg .q.bl { stroke: var(--ring); stroke-width: 2.5; }
+  .dg .lwr { fill: none; stroke: var(--last); stroke-width: 1.5; display: none; }
+  .dg .lwr.on { display: inline; }
+  .dg .lwr.past { stroke-dasharray: 3 2; }
+  .dg .node.haslw .box { stroke: var(--last); }
   .dg .ln { stroke: var(--muted); stroke-width: 1.5; }
   .dg .ah { fill: var(--muted); }
   .dg .av { fill: var(--card-2); stroke: var(--line); }
@@ -200,6 +229,10 @@ const F = M.features || [], BY = {}, PB = {};
 const PARTS = (M.parts || []).slice().sort((a, b) => a.band - b.band || a.col - b.col);
 PARTS.forEach(p => { PB[p.id] = p; p.fs = []; });
 F.forEach(f => { BY[f.id] = f; if (PB[f.part]) PB[f.part].fs.push(f); });
+/* who worked where: VIEW.who is a name, '*' for everyone or '' for nobody; the sets are filled by paintPeople() */
+const PEOPLE = (M.people || []).filter(p => p && p.name);
+const VIEW = { who: '', mode: '30', from: '', to: '' };
+let NOW = new Set(), PAST = new Set(), WHOS = {}, TRAIL = [];
 const count = s => F.filter(f => f.status === s).length;
 const blocked = F.filter(f => f.blocked);
 const working = F.filter(f => f.work && f.work.who && f.status === 'progress');
@@ -207,7 +240,7 @@ const assigned = F.filter(f => f.work && f.work.who);
 
 const cls = f => `s${si(f)}${f.blocked ? ' bl' : ''}`;
 const label = f => `${f.title}. ${LBL[f.status]}${f.blocked ? ', blocked' : ''}`;
-const sqBtn = f => `<button class="sq mark ${cls(f)}" data-k="${esc(f.id)}" title="${esc(label(f))}" aria-label="${esc(label(f))}"></button>`;
+const sqBtn = f => `<span class="cell"><button class="sq mark ${cls(f)}" data-k="${esc(f.id)}" title="${esc(label(f))}" aria-label="${esc(label(f))}"></button><small class="ini" data-i="${esc(f.id)}"></small></span>`;
 const sqI = f => `<i class="sq ${cls(f)}"></i>`;
 const badges = f => `<span class="badges"><span class="badge"><i class="sq s${si(f)}"></i>${LBL[f.status]}</span>${f.blocked ? `<span class="badge solid">${BK[f.blocked.kind] || 'Blocked'}</span>` : ''}</span>`;
 const who = f => { const w = f.work; if (!w || !w.who) return '';
@@ -221,14 +254,15 @@ function detail(f) {
     ${f.blocked && f.blocked.note ? `<p>${esc(f.blocked.note)}</p>` : ''}
     <p>${esc(f.evidence || (f.status === 'none' ? 'Nothing exists yet.' : ''))}</p>
     ${f.next ? `<p><strong>Next:</strong> ${esc(f.next)}</p>` : ''}${who(f)}
+    ${WHOS[f.id] ? `<p class="where" style="color:var(--last)">${NOW.has(f.id) ? 'Being worked on by' : 'Worked on by'} ${esc(WHOS[f.id].join(', '))}</p>` : ''}
     ${f.source ? `<p class="where">Promised in: ${esc(f.source)}</p>` : ''}
     <p class="where">${f.checked === M.updated ? 'Checked ' + day(f.checked) : 'Not rechecked since ' + day(f.checked)}</p>`;
 }
 function listFor(key) {
-  const fs = key === 'bl' ? blocked : F.filter(f => 's' + si(f) === key);
-  const name = key === 'bl' ? 'Blocked' : LBL[ORDER[+key.slice(1)]];
+  const fs = key === 'bl' ? blocked : key === 'lw' ? F.filter(f => NOW.has(f.id) || PAST.has(f.id)) : F.filter(f => 's' + si(f) === key);
+  const name = key === 'bl' ? 'Blocked' : key === 'lw' ? 'Worked on' : LBL[ORDER[+key.slice(1)]];
   return `<p class="where">${fs.length} ${fs.length === 1 ? 'feature' : 'features'}</p><h3>${name}</h3>
-    <ul class="feat">${fs.map(f => `<li>${sqI(f)}<span>${esc(f.title)}</span><span class="nx">${esc(PB[f.part] ? PB[f.part].title : '')}${key === 'bl' ? ' · ' + (BK[f.blocked.kind] || 'Blocked') : ''}</span></li>`).join('')}</ul>`;
+    <ul class="feat">${fs.map(f => `<li>${sqI(f)}<span>${esc(f.title)}</span><span class="nx">${esc(PB[f.part] ? PB[f.part].title : '')}${key === 'bl' ? ' · ' + (BK[f.blocked.kind] || 'Blocked') : ''}${key === 'lw' && WHOS[f.id] ? ' · ' + esc(WHOS[f.id].join(', ')) + (NOW.has(f.id) ? ' (now)' : '') : ''}</span></li>`).join('')}</ul>`;
 }
 function partDetail(id) {
   const p = PB[id];
@@ -287,7 +321,8 @@ function diagram() {
     const title = p.title.length > 21 ? p.title.slice(0, 20) + '…' : p.title;
     return `<g class="node${p.external ? ' ext' : ''}" data-p="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.title)}" transform="translate(${r.x},${r.y})">
       <title>${esc(p.title)}</title><rect class="box" width="${r.w}" height="${r.h}" rx="6"/><text class="tt" x="10" y="21">${esc(title)}</text>
-      ${p.fs.map((f, i) => `<rect class="q mark ${cls(f)}" x="${10 + (i % PER) * 14}" y="${33 + Math.floor(i / PER) * 14}" width="11" height="11" rx="1.5"/>`).join('')}
+      ${p.fs.map((f, i) => `<rect class="lwr" data-r="${esc(f.id)}" x="${7 + (i % PER) * 14}" y="${30 + Math.floor(i / PER) * 14}" width="17" height="17" rx="3"/>`).join('')}
+      ${p.fs.map((f, i) => `<rect class="q mark ${cls(f)}" data-k="${esc(f.id)}" x="${10 + (i % PER) * 14}" y="${33 + Math.floor(i / PER) * 14}" width="11" height="11" rx="1.5"/>`).join('')}
       <text class="cap" x="10" y="${r.h - 14}">${p.external ? 'Outside service' : p.fs.length + (p.fs.length === 1 ? ' feature' : ' features')}</text>
       ${ppl.map((n, i) => `<circle class="av" cx="${r.w - 16 - i * 22}" cy="${r.h - 18}" r="10"/><text class="avt" x="${r.w - 16 - i * 22}" y="${r.h - 15}" text-anchor="middle">${esc(init(n))}</text>`).join('')}</g>`;
   }).join('');
@@ -319,9 +354,12 @@ function page() {
       ${M.about ? `<p class="about">${esc(M.about)}</p>` : ''}
       ${(M.facts || []).length ? `<ul class="facts">${M.facts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     </header>
-    <div class="tiles">${tile('', F.length, 'features promised', '')}${LADDER.map(s => tile('s' + ORDER.indexOf(s), count(s), LBL[s].toLowerCase(), `<i class="sq s${ORDER.indexOf(s)}"></i>`)).join('')}${blocked.length ? tile('bl', blocked.length, 'blocked', '<i class="sq ring bl"></i>') : ''}</div>
+    ${PEOPLE.length ? `<div class="bar"><label for="who">Worked on by<select id="who">${PEOPLE.slice().sort((a, b) => (b.name === M.runBy) - (a.name === M.runBy)).map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}<option value="*">Everyone</option><option value="">Nobody</option></select></label>
+      <label for="range">Period<select id="range"><option value="30">Last 30 days</option><option value="all">Whole project</option><option value="custom">Choose dates</option></select></label>
+      <span id="dates" hidden><label for="from">From<input type="date" id="from"></label> <label for="to">to<input type="date" id="to"></label></span></div>` : ''}
+    <div class="tiles">${tile('', F.length, 'features promised', '')}${LADDER.map(s => tile('s' + ORDER.indexOf(s), count(s), LBL[s].toLowerCase(), `<i class="sq s${ORDER.indexOf(s)}"></i>`)).join('')}${blocked.length ? tile('bl', blocked.length, 'blocked', '<i class="sq ring bl"></i>') : ''}${PEOPLE.length ? tile('lw', 0, 'worked on', '<i class="sq lwsw"></i>') : ''}</div>
     ${section(M.recap, `<h2>Where we are</h2><p class="recap">${esc(M.recap)}</p>`)}
-    <section><h2>Everything promised</h2><p class="muted">One square is one feature, grouped by the part of the system it belongs to.</p><div class="hero"><div class="blocks">${PARTS.filter(p => p.fs.length).map(p => `<div class="blk"><h3>${esc(p.title)}</h3><div>${p.fs.map(sqBtn).join('')}</div></div>`).join('')}</div><div class="panel" data-detail>${detail()}</div></div></section>
+    <section><h2>Everything promised</h2><p class="muted">One square is one feature, grouped by the part of the system it belongs to.</p>${PEOPLE.length ? `<p class="muted lwnote" id="lwnote"><i class="sq lwsw"></i><span>on it now</span><i class="sq lwsw past"></i><span>touched earlier</span><span id="lwwho"></span></p>` : ''}<div class="hero"><div class="blocks">${PARTS.filter(p => p.fs.length).map(p => `<div class="blk"><h3>${esc(p.title)}</h3><div>${p.fs.map(sqBtn).join('')}</div></div>`).join('')}</div><div class="panel" data-detail>${detail()}</div></div>${PEOPLE.length ? `<div class="trailbox" id="trailbox"><h3 id="trailh">Work trail</h3><div class="trail" id="trail"></div></div>` : ''}</section>
     ${section(PARTS.length, `<h2>How the system fits together</h2><p class="muted">One box is a screen or a part working in the background. The squares are its features.${assigned.length ? ` Initials show who is assigned to it in ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}.` : ''}</p>${diagram()}<div class="inline" data-pdetail>${partDetail()}</div>`)}
     ${section((M.flows || []).length, `<h2>How far a person can get</h2><p class="lead">${esc(M.headline || '')}</p>${(M.flows || []).map(flowHtml).join('')}`)}
     ${section(working.length, `<h2>Being worked on now</h2><p class="muted">Assignees from ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}, as of ${day(M.updated)}.</p><div class="cols">${Object.keys(byWho).map(n => `<div class="col"><div class="person"><i>${esc(init(n))}</i><h3>${esc(n)}</h3></div><ul>${byWho[n].map(f => `<li><strong>${esc(f.title)}.</strong> ${esc(f.work.ticket || f.work.branch || '')}</li>`).join('')}</ul></div>`).join('')}</div>`)}
@@ -344,7 +382,50 @@ function pickPart(n) {
   n.classList.add('on');
   app.querySelector('[data-pdetail]').innerHTML = partDetail(n.dataset.p);
 }
+function inRange(d) {
+  if (VIEW.mode === 'all') return true;
+  if (VIEW.mode === 'custom') return (!VIEW.from || d >= VIEW.from) && (!VIEW.to || d <= VIEW.to);
+  const t = new Date(M.updated + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() - 30);
+  return d >= t.toISOString().slice(0, 10);
+}
+function clearTrail() {
+  app.querySelectorAll('.trail button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  if (app.dataset.f === 'trail') delete app.dataset.f;
+}
+/* rings, initials, the trail list and the "worked on" count all follow the picker */
+function paintPeople() {
+  if (!PEOPLE.length) return;
+  const sel = VIEW.who === '*' ? PEOPLE : PEOPLE.filter(p => p.name === VIEW.who), who = {};
+  NOW = new Set(); PAST = new Set(); TRAIL = [];
+  const note = (id, name) => (who[id] = who[id] || new Set()).add(name);
+  sel.forEach(p => {
+    (p.now || []).forEach(id => { NOW.add(id); note(id, p.name); });
+    (p.trail || []).filter(t => inRange(t.date)).forEach(t => { TRAIL.push({ name: p.name, t }); (t.features || []).forEach(id => { PAST.add(id); note(id, p.name); }); });
+  });
+  NOW.forEach(id => PAST.delete(id));
+  WHOS = {}; Object.keys(who).forEach(k => { WHOS[k] = [...who[k]]; });
+  TRAIL.sort((a, b) => a.t.date < b.t.date ? 1 : a.t.date > b.t.date ? -1 : 0);
+  app.querySelectorAll('.mark').forEach(m => { m.classList.toggle('lw', NOW.has(m.dataset.k)); m.classList.toggle('lwp', PAST.has(m.dataset.k)); m.classList.remove('th'); });
+  app.querySelectorAll('.ini').forEach(el => {
+    const w = VIEW.who === '*' ? (WHOS[el.dataset.i] || []) : [];
+    const shown = w.length > 2 ? [init(w[0]), '+' + (w.length - 1)] : w.map(init);
+    el.innerHTML = shown.map(t => `<i class="av">${esc(t)}</i>`).join('');
+    el.title = w.join(', ');
+  });
+  app.querySelectorAll('.lwr').forEach(r => { r.classList.toggle('on', NOW.has(r.dataset.r) || PAST.has(r.dataset.r)); r.classList.toggle('past', PAST.has(r.dataset.r)); });
+  app.querySelectorAll('.node').forEach(n => n.classList.toggle('haslw', PB[n.dataset.p].fs.some(f => NOW.has(f.id) || PAST.has(f.id))));
+  app.querySelector('.tile[data-f="lw"] b').textContent = NOW.size + PAST.size;
+  const period = VIEW.mode === 'all' ? 'the whole project' : VIEW.mode === 'custom' ? `${VIEW.from ? day(VIEW.from) : 'the start'} to ${VIEW.to ? day(VIEW.to) : 'today'}` : 'the last 30 days';
+  const name = VIEW.who === '*' ? 'Everyone' : VIEW.who;
+  document.getElementById('lwnote').hidden = document.getElementById('trailbox').hidden = !VIEW.who;
+  document.getElementById('lwwho').textContent = VIEW.who === '*' ? '· initials show who · ' + period : `· ${name} · ${period}`;
+  document.getElementById('trailh').textContent = `Work trail: ${name}, ${period}`;
+  document.getElementById('trail').innerHTML = TRAIL.length ? TRAIL.map((r, i) => `<button type="button" data-t="${i}" aria-pressed="false"><span class="d">${day(r.t.date)}</span><span class="what">${VIEW.who === '*' ? `<i class="av">${esc(init(r.name))}</i><b>${esc(r.name)}</b> ` : ''}${esc(r.t.summary || '')}</span></button>`).join('') : '<p class="muted" style="padding:8px 6px">No work recorded in this period.</p>';
+  clearTrail();
+  if (app.dataset.f === 'lw') app.querySelector('[data-detail]').innerHTML = listFor('lw');
+}
 function setFilter(key) {
+  clearTrail();
   if (app.dataset.f === key) key = '';
   if (key) app.dataset.f = key; else delete app.dataset.f;
   app.querySelectorAll('.tile').forEach(t => t.setAttribute('aria-pressed', String(!!key && t.dataset.f === key)));
@@ -387,6 +468,17 @@ app.addEventListener('click', e => {
   if (chip) { const b = box(chip.dataset.fill); b.value = chip.textContent; b.focus(); return syncAnswers(true); }
   if (e.target.closest('#copy')) return copyAnswers();
   if (e.target.closest('#clear')) { ITEMS.forEach(it => { box(it.key).value = ''; }); return syncAnswers(true); }
+  const tb = e.target.closest('.trail button');
+  if (tb) {
+    const on = tb.getAttribute('aria-pressed') === 'true';
+    setFilter('');
+    if (!on) {
+      const ids = new Set(TRAIL[+tb.dataset.t].t.features || []);
+      app.querySelectorAll('.mark').forEach(m => m.classList.toggle('th', ids.has(m.dataset.k)));
+      app.dataset.f = 'trail'; tb.setAttribute('aria-pressed', 'true');
+    }
+    return;
+  }
   const t = e.target.closest('.tile');
   if (t) return setFilter(t.dataset.f);
   const n = e.target.closest('.node[data-p]');
@@ -400,4 +492,20 @@ app.addEventListener('keydown', e => {
   const n = e.target.closest('.node[data-p]');
   if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPart(n); }
 });
+
+/* the picker: starts on whoever ran the map, and remembers this viewer's last choice */
+if (PEOPLE.length) {
+  const VKEY = 'zoom-out:view:' + M.project, $ = id => document.getElementById(id);
+  VIEW.who = PEOPLE.some(p => p.name === M.runBy) ? M.runBy : PEOPLE[0].name;
+  try { const v = JSON.parse(localStorage.getItem(VKEY) || 'null'); if (v && (v.who === '*' || v.who === '' || PEOPLE.some(p => p.name === v.who))) Object.assign(VIEW, v); } catch (e) { /* keep the default */ }
+  $('who').value = VIEW.who; $('range').value = VIEW.mode; $('from').value = VIEW.from; $('to').value = VIEW.to; $('dates').hidden = VIEW.mode !== 'custom';
+  app.addEventListener('change', e => {
+    if (!e.target.closest('.bar')) return;
+    VIEW.who = $('who').value; VIEW.mode = $('range').value; VIEW.from = $('from').value; VIEW.to = $('to').value;
+    $('dates').hidden = VIEW.mode !== 'custom';
+    try { localStorage.setItem(VKEY, JSON.stringify(VIEW)); } catch (e) { /* the picker still works */ }
+    paintPeople();
+  });
+  paintPeople();
+}
 </script>

@@ -204,6 +204,48 @@
   .outlist li { font-size: 14px; color: var(--muted); max-width: 80ch; overflow-wrap: anywhere; }
   .outlist li strong { color: var(--fg); font-weight: 600; display: block; }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  /* map age, progress by area, progress over time, board */
+  .banner { border: 1px solid var(--prog); border-radius: var(--r-card); background: var(--card); padding: 12px 16px; font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+  .banner span { color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .legend .sq { width: 11px; height: 11px; }
+  .areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .area { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .area h3 { font-size: 13.5px; overflow-wrap: anywhere; }
+  .area .pct { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 7px; }
+  .area .pct b { font-size: 22px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .area .pct span { font-size: 12px; color: var(--muted); }
+  .lbar { display: flex; gap: 2px; height: 8px; }
+  .lbar i { display: block; height: 100%; min-width: 3px; background: var(--c); box-shadow: inset 0 0 0 1px var(--b); border-radius: 1px; }
+  .hist { width: 100%; height: auto; display: block; max-width: 760px; }
+  .hist text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+  .hist .grid { stroke: var(--line); stroke-width: 1; }
+  .hist .c { fill: var(--c); stroke: var(--b); stroke-width: 1; }
+  .hist .hit { fill: transparent; cursor: default; }
+  .hist .hit:hover, .hist .hit:focus-visible { fill: rgba(255, 255, 255, .07); outline: none; }
+  .histread { font-size: 13.5px; color: var(--muted); min-height: 1.5em; }
+  .histread strong { color: var(--fg); font-weight: 600; }
+  .tbl { border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  .tbl th, .tbl td { padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tbl th { font-weight: 500; color: var(--muted); }
+  .tbl th:first-child, .tbl td:first-child { text-align: left; }
+  .board { display: grid; grid-template-columns: repeat(var(--n), minmax(176px, 1fr)); gap: 10px; align-items: start; }
+  .lcol { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-card); display: flex; flex-direction: column; min-width: 0; }
+  .colh { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+  .colh span { display: flex; align-items: center; gap: 7px; }
+  .colh .sq { width: 11px; height: 11px; }
+  .colh b { font-family: var(--mono); font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cards { display: flex; flex-direction: column; gap: 6px; padding: 8px; max-height: 440px; overflow-y: auto; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 8px 10px; transition: opacity .15s; min-width: 0; }
+  .card summary { list-style: none; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .card summary::-webkit-details-marker { display: none; }
+  .card .ct { font-size: 13.5px; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+  .card[open] { border-color: var(--muted); }
+  .card .badge { white-space: normal; }
+  .card .cb { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .pr { margin-top: 6px; }
+  .pr pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-ctl); max-height: 280px; overflow-y: auto; }
   .plain { display: flex; flex-direction: column; gap: 7px; }
   .plain li { font-size: 14px; color: var(--muted); max-width: 72ch; }
   .plain li strong { color: var(--fg); font-weight: 600; }
@@ -337,8 +379,48 @@ const CHIPS = { block: ['Unblocked now', 'Still blocked'], q: ['Yes', 'No'], nex
 function act(type, id, kind, title, note, extra) {
   const key = (type + '-' + id).replace(/[^A-Za-z0-9_-]/g, '-');
   ITEMS.push({ key, kind, title, note, ref: type === 'block' ? id : '' });
-  return `<li class="act"><div class="it"><span class="ttl">${extra && extra.n ? `<span class="n">${extra.n}</span>` : ''}${esc(title)}${extra && extra.skill ? `<code>${esc(extra.skill)}</code>` : ''}</span>${note ? `<span class="nt">${esc(note)}</span>` : ''}${extra && extra.since && extra.since !== M.updated ? `<span class="where">Open since ${day(extra.since)}</span>` : ''}</div>
+  return `<li class="act"><div class="it"><span class="ttl">${extra && extra.n ? `<span class="n">${extra.n}</span>` : ''}${esc(title)}${extra && extra.skill ? `<code>${esc(extra.skill)}</code>` : ''}</span>${note ? `<span class="nt">${esc(note)}</span>` : ''}${extra && extra.since && extra.since !== M.updated ? `<span class="where">Open since ${day(extra.since)}</span>` : ''}${extra && extra.prompt ? `<details class="pr"><summary class="more">Prompt for an agent</summary><pre>${esc(extra.prompt)}</pre><button class="chip" type="button" data-copy>Copy prompt</button></details>` : ''}</div>
     <div class="ans"><textarea id="a-${key}" data-a="${key}" rows="1" placeholder="Your answer" aria-label="Your answer: ${esc(title)}"></textarea><div class="chips">${CHIPS[type].map(c => `<button class="chip" type="button" data-fill="${key}">${c}</button>`).join('')}</div></div></li>`;
+}
+
+/* --- HQ additions: map age, progress by area, progress over time, board. All computed from the map. --- */
+const HIST = (M._history || []).filter(h => h && h.date && h.counts);
+const BARORDER = LADDER.slice().reverse();
+const legend = () => `<p class="legend">${BARORDER.map(s => `<span><i class="sq s${ORDER.indexOf(s)}"></i>${LBL[s]}</span>`).join('')}</p>`;
+function ageBanner() {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(M.updated || ''); if (!m) return '';
+  const days = Math.floor((Date.now() - Date.UTC(+m[1], +m[2] - 1, +m[3])) / 864e5);
+  return days > 3 ? `<div class="banner" role="status"><strong>This map is ${days} days old.</strong><span>It was last refreshed on ${day(M.updated)}. The code and the tracker may have moved since. Run /zoom-out in the project to refresh it.</span></div>` : '';
+}
+function lbar(fs) {
+  return `<div class="lbar" role="img" aria-label="${esc(BARORDER.map(s => fs.filter(f => f.status === s).length + ' ' + LBL[s].toLowerCase()).join(', '))}">${BARORDER.map(s => { const n = fs.filter(f => f.status === s).length; return n ? `<i class="s${ORDER.indexOf(s)}" style="flex:${n}" title="${n} ${LBL[s].toLowerCase()}"></i>` : ''; }).join('')}</div>`;
+}
+function areas() {
+  const what = M.hasLive === false ? 'working in testing' : 'tested or live';
+  return `<div class="areas">${PARTS.filter(p => p.fs.length).map(p => { const done = p.fs.filter(f => si(f) >= 3).length;
+    return `<div class="area"><h3>${esc(p.title)}</h3><div class="pct"><b>${Math.round(done / p.fs.length * 100)}%</b><span>${what} · ${done} of ${p.fs.length}</span></div>${lbar(p.fs)}</div>`; }).join('')}</div>`;
+}
+const histRead = i => { const h = HIST[i]; return `<strong>${day(h.date)}</strong> · ${h.total} features · ${BARORDER.map(s => `${h.counts[s] || 0} ${LBL[s].toLowerCase()}`).join(', ')}${h.blocked ? ` · ${h.blocked} blocked` : ''}`; };
+function histChart() {
+  const W = 720, H = 230, L = 34, R = 8, T = 10, B = 26, pw = W - L - R, ph = H - T - B, n = HIST.length;
+  const top = Math.max(1, ...HIST.map(h => h.total)), step = Math.max(1, Math.ceil(top / 4)), max = step * 4;
+  const band = pw / n, bw = Math.min(46, band * 0.7), y = v => T + ph - v / max * ph, every = Math.ceil(n / 8);
+  const short = d => day(d).replace(/ \d{4}$/, '');
+  const cols = HIST.map((h, i) => { let acc = 0; const x = L + band * i + (band - bw) / 2;
+    const segs = BARORDER.map(s => { const v = h.counts[s] || 0; if (!v) return ''; const y1 = y(acc + v), hh = y(acc) - y1; acc += v;
+      return `<rect class="c s${ORDER.indexOf(s)}" x="${x}" y="${y1 + (hh > 4 ? 1 : 0)}" width="${bw}" height="${Math.max(1, hh - (hh > 4 ? 2 : 0))}" rx="1.5"/>`; }).join('');
+    const lab = (i % every === 0 || i === n - 1) && !(i !== n - 1 && n - 1 - i < every) ? `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle">${short(h.date)}</text>` : '';
+    return `${segs}${lab}<rect class="hit" data-h="${i}" tabindex="0" role="img" aria-label="${esc(histRead(i).replace(/<[^>]+>/g, ''))}" x="${L + band * i}" y="${T}" width="${band}" height="${ph}"/>`; }).join('');
+  const grid = [0, 1, 2, 3, 4].map(k => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(k * step)}" y2="${y(k * step)}"/><text x="${L - 6}" y="${y(k * step) + 4}" text-anchor="end">${k * step}</text>`).join('');
+  return `${legend()}<svg class="hist" viewBox="0 0 ${W} ${H}" role="group" aria-label="Features at each step of the ladder, at each refresh">${grid}${cols}</svg>
+    <p class="histread" id="histread">${histRead(n - 1)}</p>${n === 1 ? '<p class="muted">One refresh so far. A column is added each time the map is refreshed.</p>' : ''}
+    <details><summary class="more">Show as a table</summary><div class="scroll"><table class="tbl"><thead><tr><th>Refresh</th>${BARORDER.map(s => `<th>${LBL[s]}</th>`).join('')}<th>Total</th><th>Blocked</th></tr></thead><tbody>${HIST.slice().reverse().map(h => `<tr><td>${day(h.date)}</td>${BARORDER.map(s => `<td>${h.counts[s] || 0}</td>`).join('')}<td>${h.total}</td><td>${h.blocked || 0}</td></tr>`).join('')}</tbody></table></div></details>`;
+}
+const card = f => `<details class="card mark ${cls(f)}" data-k="${esc(f.id)}"><summary><span class="ct">${esc(f.title)}</span><span class="where">${esc(PB[f.part] ? PB[f.part].title : '')}${f.work && f.work.who ? ' · ' + esc(f.work.who) : ''}</span>${f.blocked ? `<span class="badge solid">${BK[f.blocked.kind] || 'Blocked'}</span>` : ''}</summary>
+  <div class="cb">${f.blocked && f.blocked.note ? `<span>${esc(f.blocked.note)}</span>` : ''}<span>${esc(f.evidence || 'Nothing exists yet.')}</span>${f.next ? `<span><strong>Next:</strong> ${esc(f.next)}</span>` : ''}${who(f)}</div></details>`;
+function board() {
+  return `<div class="scroll"><div class="board" style="--n:${LADDER.length}">${LADDER.map(s => { const fs = F.filter(f => f.status === s);
+    return `<div class="lcol"><div class="colh"><span><i class="sq s${ORDER.indexOf(s)}"></i>${LBL[s]}</span><b>${fs.length}</b></div><div class="cards">${fs.map(card).join('') || '<p class="muted" style="padding:4px 2px">None</p>'}</div></div>`; }).join('')}</div></div>`;
 }
 
 const section = (on, html) => on ? `<section>${html}</section>` : '';
@@ -354,18 +436,22 @@ function page() {
       ${M.about ? `<p class="about">${esc(M.about)}</p>` : ''}
       ${(M.facts || []).length ? `<ul class="facts">${M.facts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     </header>
+    ${ageBanner()}
     ${PEOPLE.length ? `<div class="bar"><label for="who">Worked on by<select id="who">${PEOPLE.slice().sort((a, b) => (b.name === M.runBy) - (a.name === M.runBy)).map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}<option value="*">Everyone</option><option value="">Nobody</option></select></label>
       <label for="range">Period<select id="range"><option value="30">Last 30 days</option><option value="all">Whole project</option><option value="custom">Choose dates</option></select></label>
       <span id="dates" hidden><label for="from">From<input type="date" id="from"></label> <label for="to">to<input type="date" id="to"></label></span></div>` : ''}
     <div class="tiles">${tile('', F.length, 'features promised', '')}${LADDER.map(s => tile('s' + ORDER.indexOf(s), count(s), LBL[s].toLowerCase(), `<i class="sq s${ORDER.indexOf(s)}"></i>`)).join('')}${blocked.length ? tile('bl', blocked.length, 'blocked', '<i class="sq ring bl"></i>') : ''}${PEOPLE.length ? tile('lw', 0, 'worked on', '<i class="sq lwsw"></i>') : ''}</div>
     ${section(M.recap, `<h2>Where we are</h2><p class="recap">${esc(M.recap)}</p>`)}
     <section><h2>Everything promised</h2><p class="muted">One square is one feature, grouped by the part of the system it belongs to.</p>${PEOPLE.length ? `<p class="muted lwnote" id="lwnote"><i class="sq lwsw"></i><span>on it now</span><i class="sq lwsw past"></i><span>touched earlier</span><span id="lwwho"></span></p>` : ''}<div class="hero"><div class="blocks">${PARTS.filter(p => p.fs.length).map(p => `<div class="blk"><h3>${esc(p.title)}</h3><div>${p.fs.map(sqBtn).join('')}</div></div>`).join('')}</div><div class="panel" data-detail>${detail()}</div></div>${PEOPLE.length ? `<div class="trailbox" id="trailbox"><h3 id="trailh">Work trail</h3><div class="trail" id="trail"></div></div>` : ''}</section>
+    ${section(PARTS.some(p => p.fs.length), `<h2>Progress by area</h2><p class="muted">Each part of the system, with how much of it is ${M.hasLive === false ? 'working in testing' : 'tested or live'}.</p>${legend()}${areas()}`)}
+    ${section(HIST.length, `<h2>Progress over time</h2><p class="muted">How many features stood at each step, every time the map was refreshed.</p>${HIST.length ? histChart() : ''}`)}
     ${section(PARTS.length, `<h2>How the system fits together</h2><p class="muted">One box is a screen or a part working in the background. The squares are its features.${assigned.length ? ` Initials show who is assigned to it in ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}.` : ''}</p>${diagram()}<div class="inline" data-pdetail>${partDetail()}</div>`)}
     ${section((M.flows || []).length, `<h2>How far a person can get</h2><p class="lead">${esc(M.headline || '')}</p>${(M.flows || []).map(flowHtml).join('')}`)}
+    ${section(F.length, `<h2>Board</h2><p class="muted">Every feature in the column it has reached. Open a card for its evidence.</p>${board()}`)}
     ${section(working.length, `<h2>Being worked on now</h2><p class="muted">Assignees from ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}, as of ${day(M.updated)}.</p><div class="cols">${Object.keys(byWho).map(n => `<div class="col"><div class="person"><i>${esc(init(n))}</i><h3>${esc(n)}</h3></div><ul>${byWho[n].map(f => `<li><strong>${esc(f.title)}.</strong> ${esc(f.work.ticket || f.work.branch || '')}</li>`).join('')}</ul></div>`).join('')}</div>`)}
     ${section(blocked.length, `<h2>What is holding things up</h2><p class="muted">Blocked features have a white ring in the squares above. Write what should happen next to any of them.</p>${Object.keys(BK).map(k => { const fs = blocked.filter(f => f.blocked.kind === k); return fs.length ? `<details class="grp"${k === 'decision' ? ' open' : ''}><summary><h3 style="display:inline">${BK[k]}</h3><span class="cnt">${fs.length} ${fs.length === 1 ? 'feature' : 'features'}${k === 'build' ? ' · the only kind that is coding' : ''}</span></summary><ul class="acts">${fs.map(f => act('block', f.id, 'Blocker (' + BK[k] + ')', f.title, f.blocked.note, { since: f.blocked.since })).join('')}</ul></details>` : ''; }).join('')}`)}
     ${section((M.questions || []).length, `<h2>Questions for you</h2><p class="muted">Things the map could not settle from the code, the plan or the tracker.</p><ul class="acts">${(M.questions || []).map((x, i) => act('q', i + 1, 'Question', x.question, x.why, { since: x.since })).join('')}</ul>`)}
-    ${section((M.nextSteps || []).length, `<h2>Suggested next steps</h2><ul class="acts">${(M.nextSteps || []).map((x, i) => act('next', i + 1, 'Next step ' + (i + 1), x.step, x.why, { n: i + 1, skill: x.skill })).join('')}</ul>`)}
+    ${section((M.nextSteps || []).length, `<h2>Suggested next steps</h2><ul class="acts">${(M.nextSteps || []).map((x, i) => act('next', i + 1, 'Next step ' + (i + 1), x.step, x.why, { n: i + 1, skill: x.skill, prompt: x.prompt })).join('')}</ul>`)}
     ${section((M.pending || []).length, `<h2>Waiting for your OK</h2><p class="muted">Found since the last run. Not part of the promise until you say so.</p><ul class="acts">${(M.pending || []).map((x, i) => act('pending', i + 1, 'Waiting for OK', x.title, (x.note || '') + (x.source ? ` (${x.source})` : ''), { since: x.since })).join('')}</ul>`)}
     ${section(ITEMS.length, `<h2>Your answers</h2><p class="muted">Everything you answered above, in one place. Copy it, then paste it to your agent after typing /zoom-out. Answer as many or as few as you like: anything left empty stays open and comes back on the next map.</p><p class="where" id="prog"></p><ol class="outlist" id="outlist"></ol>
       <div class="row"><button class="btn" id="copy" type="button" disabled>Copy answers</button><button class="btn ghost" id="clear" type="button" disabled>Clear all</button><span class="muted" id="copied" role="status"></span></div><textarea id="copybox" rows="8" readonly hidden aria-label="Answers to copy"></textarea>`)}
@@ -491,6 +577,18 @@ app.addEventListener('click', e => {
 app.addEventListener('keydown', e => {
   const n = e.target.closest('.node[data-p]');
   if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPart(n); }
+});
+
+/* progress over time: hovering or tabbing to a column reads it out; next-step prompts copy on click */
+const readCol = e => { const h = e.target.closest && e.target.closest('.hit[data-h]'); if (h) document.getElementById('histread').innerHTML = histRead(+h.dataset.h); };
+app.addEventListener('mouseover', readCol);
+app.addEventListener('focusin', readCol);
+app.addEventListener('click', e => {
+  const c = e.target.closest('[data-copy]'); if (!c) return;
+  const pre = c.parentElement.querySelector('pre');
+  const done = () => { c.textContent = 'Copied'; setTimeout(() => { c.textContent = 'Copy prompt'; }, 1500); };
+  const pick = () => { const r = document.createRange(); r.selectNodeContents(pre); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); c.textContent = 'Selected. Copy it.'; };
+  try { navigator.clipboard.writeText(pre.textContent).then(done, pick); } catch (err) { pick(); }
 });
 
 /* the picker: starts on whoever ran the map, and remembers this viewer's last choice */

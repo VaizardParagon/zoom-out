@@ -11,7 +11,7 @@
 | `updated` | Date of this run, `YYYY-MM-DD`. **Checked.** |
 | `headline` | One plain sentence: how far a real user gets today and where they stop. |
 | `recap` | One short paragraph: what happened since the last run and where that leaves the project. Shown as "Where we are". **Checked:** required. |
-| `nextSteps` | One to five suggested moves, most valuable first. Each has `step`, `why`, and optional `skill` (a slash command such as `/to-questionnaire`). **Checked.** |
+| `nextSteps` | One to five suggested moves, most valuable first. Each has `step`, `why`, optional `skill` (a slash command such as `/to-questionnaire`) and optional `prompt`: text an agent starting cold in this repo could be handed to do the step. **Checked:** a `prompt` carries three labelled lines, `Evidence:`, `Done when:` and `Needs the human's OK:`. |
 | `people` | Everyone who has worked in the repo, each with `name`, `now` (ids of the features they are on right now) and `trail` (their work history: entries of `date`, `summary`, `features`). The page's picker switches between them. **Checked:** names are unique and every id exists. |
 | `runBy` | The `name` of the person who ran this map. The picker starts on them. **Checked:** is one of `people`. |
 | `facts` | Optional short chips under the counts, for conditions that colour everything else: the live build, "Email off". |
@@ -46,7 +46,7 @@
 | `evidence` | What earned the status, as something the human could go and look at. **Checked:** required above `none`. |
 | `next` | Optional. The one thing that would move it up a step. |
 | `blocked` | Optional. `kind` (`decision`, `off`, `build`) and `note`. **Checked.** |
-| `work` | The feature's open ticket in the tracker: `who` (the ticket's assignee, as the tracker shows it), `ticket`, `url`, `branch`. **Checked:** `who` is allowed only when `tracker` is `linear` or `github`, and needs `ticket` and `url`. |
+| `work` | The feature's open ticket and branch: `who` (the ticket's assignee, as the tracker shows it), `ticket`, `url`, `branch`. `branch` is the bare name as `git branch` prints it, and may stand without the other three. Readers outside this skill use it to match live work to a feature. **Checked:** `who` is allowed only when `tracker` is `linear` or `github`, and needs `ticket` and `url`; `branch` has no spaces and no `origin/` or `refs/` prefix. |
 | `checked` | Date its evidence was last looked at. **Checked.** |
 | `source` | Where it was promised. **Checked:** required. |
 
@@ -60,3 +60,7 @@
 The page colours a step by its least-proven feature and marks where each lane stops: the first step below `tested`, or blocked.
 
 **Checked:** every feature id exists; every lane named in a step is in `lanes`.
+
+## What the page adds without a field
+
+The build reads the git history of `system-map/map.json` and hands the page the ladder counts at each refresh, for "Progress over time". That series lives in git alone and is never written into the map. The map's age, the per-area percentages and the board are computed from the fields above.

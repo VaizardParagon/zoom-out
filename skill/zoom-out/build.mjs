@@ -52,6 +52,10 @@ const known = id => (M.features || []).some(f => f.id === id);
 });
 dupes((M.people || []).map(p => p && p.name), 'person');
 need(!M.runBy || (M.people || []).some(p => p.name === M.runBy), 'runBy: must be the name of one of people');
+const strings = (v, where) => need(v == null || (Array.isArray(v) && v.every(x => typeof x === 'string' && x.trim())), `${where}: must be a list of paths`);
+strings(M.planPaths, 'planPaths');
+(M.features || []).forEach(f => strings(f.paths, `feature ${f.id}, paths`));
+(M.people || []).forEach(p => strings(p && p.emails, `people ${p && p.name}, emails`));
 need(Array.isArray(M.bands) && M.bands.length, 'bands: need at least one');
 need(Array.isArray(M.parts) && M.parts.length, 'parts: need at least one');
 need(Array.isArray(M.features) && M.features.length, 'features: need at least one');
@@ -109,8 +113,14 @@ try {
 history.push(tallyOf(M));
 history = [...new Map(history.map(h => [h.date, h])).values()].sort((a, b) => (a.date < b.date ? -1 : 1));
 
+// For readers outside this skill (HQ): the same series as a file, rewritten on every build.
+writeFileSync(join(dir, 'history.json'), JSON.stringify({ project: M.project, updated: M.updated, hasLive: M.hasLive !== false, points: history }, null, 2) + '\n');
+
 const custom = join(dir, 'template.html');
-const template = readFileSync(existsSync(custom) ? custom : join(here, 'template.html'), 'utf8');
+const shipped = readFileSync(join(here, 'template.html'), 'utf8');
+const template = existsSync(custom) ? readFileSync(custom, 'utf8') : shipped;
+const version = t => { const m = /<meta name="zoom-out-template" content="(\d+)">/.exec(t); return m ? +m[1] : 0; };
+const behind = existsSync(custom) && version(template) < version(shipped);
 const htmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const fragment = template
   .replace('__TITLE__', () => htmlEsc(`${M.project} System Map`))
@@ -146,6 +156,9 @@ if (noBranch.length) say.push(`In progress with no branch recorded (${noBranch.l
 const noPrompt = (M.nextSteps || []).filter(x => !x.prompt).length;
 if (noPrompt) say.push(`${noPrompt} next step(s) have no prompt.`);
 say.push(`Progress over time: ${history.length} refresh(es) charted.`);
+const pathless = feats.filter(f => !(f.paths || []).length).length;
+if (pathless) say.push(`${pathless} feature(s) have no paths, so every refresh must recheck them.`);
 if ((M.pending || []).length) say.push(`${M.pending.length} item(s) waiting for the human's OK.`);
+if (behind) say.push(`TEMPLATE OUT OF DATE: system-map/template.html is version ${version(template)} and the skill's is version ${version(shipped)}. Bring the copy up to date (see "Does the default page fit?" in SKILL.md).`);
 say.push(`Template: ${existsSync(custom) ? 'this project\'s own copy' : 'default'}.`, `Page: ${join(dir, 'index.html')}`);
 console.log(say.join('\n'));

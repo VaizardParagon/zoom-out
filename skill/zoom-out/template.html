@@ -1,5 +1,6 @@
 <title>__TITLE__</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="zoom-out-template" content="4">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
   /* Layout: one column of bordered cards on near-black, in the shadcn/ui manner (thin borders, squared controls, white as the primary).
@@ -16,7 +17,7 @@
   }
   body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
   .page {
-    max-width: 1080px; margin: 0 auto; padding-block: 32px 64px;
+    max-width: 1080px; margin: 0 auto; padding-block: 32px 150px;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     display: flex; flex-direction: column; gap: 16px;
@@ -251,7 +252,69 @@
   .plain li strong { color: var(--fg); font-weight: 600; }
   .aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
   footer { padding: 16px 4px 0; display: flex; flex-direction: column; gap: 8px; }
-  @media (prefers-reduced-motion: reduce) { .sq, .dg .q { transition: none; } }
+  [hidden] { display: none !important; }
+
+  /* --- navigation: one view at a time. The dock switches views; the circle menu jumps between a view's sections. --- */
+  .view { display: flex; flex-direction: column; gap: 16px; animation: viewin .28s ease both; }
+  @keyframes viewin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  #app:not([data-view="overview"]) .about, #app:not([data-view="overview"]) .facts { display: none; }
+  #app:not([data-view="overview"]) header { padding: 0; }
+  #app:not([data-view="overview"]) header h1 { font-size: 22px; letter-spacing: -.01em; }
+  #app[data-view="flows"] .tiles, #app[data-view="team"] .tiles, #app[data-view="answers"] .tiles { display: none; }
+  #app:not([data-view="scope"]):not([data-view="system"]) .bar { display: none; }
+
+  .dockwrap { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 30; display: flex; justify-content: center; pointer-events: none;
+    padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  .dock { --size: 48px; pointer-events: auto; display: inline-flex; align-items: flex-end; gap: 8px; padding: 10px; border-radius: 24px;
+    background: rgba(23, 23, 23, .8); -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid #404040; box-shadow: 0 20px 40px rgba(0, 0, 0, .45); animation: dockin .5s cubic-bezier(.25, .46, .45, .94) both; }
+  @keyframes dockin { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+  .di { --s: 1; position: relative; flex: none; width: calc(var(--size) * var(--s)); height: calc(var(--size) * var(--s)); padding: 0; border: 0; background: transparent; color: #fff; cursor: pointer;
+    border-radius: 16px; transform: translateY(calc((var(--s) - 1) * -10px)); transition: width .14s cubic-bezier(.2, .8, .3, 1.25), height .14s cubic-bezier(.2, .8, .3, 1.25), transform .14s cubic-bezier(.2, .8, .3, 1.25); }
+  .di:focus-visible { outline: 2px solid rgba(255, 255, 255, .6); outline-offset: 3px; }
+  .dic { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(#262626, #171717); border: 1px solid #404040;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .18); transition: box-shadow .2s, transform .1s; }
+  .dic::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, rgba(255, 255, 255, .17) 0%, transparent 50%); opacity: .55; transition: opacity .2s; }
+  .di:hover .dic { box-shadow: 0 8px 32px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .3), 0 0 30px rgba(255, 255, 255, .12); }
+  .di:hover .dic::after { opacity: 1; }
+  .di:active .dic { transform: scale(.9); }
+  .dic svg { width: 54%; height: 54%; }
+  .ddot { position: absolute; left: 50%; bottom: -8px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: rgba(255, 255, 255, .85); transform: scale(0); transition: transform .2s; }
+  .di[aria-current="page"] .ddot { transform: scale(1); }
+  .di[aria-current="page"] .dic { border-color: #737373; }
+  .dbadge { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #ef4444; color: #fff;
+    font: 600 11px/16px var(--body); border: 2px solid #0a0a0a; display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+  .dtip { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translate(-50%, 8px) scale(.9); opacity: 0; pointer-events: none; padding: 6px 12px; border-radius: 8px;
+    background: rgba(23, 23, 23, .96); border: 1px solid rgba(255, 255, 255, .1); color: #fff; font: 500 13px var(--body); white-space: nowrap; box-shadow: 0 12px 24px rgba(0, 0, 0, .3); transition: opacity .15s ease-out, transform .15s ease-out; }
+  .dtip::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 8px; margin-left: -4px; transform: rotate(45deg); background: inherit; border-right: 1px solid rgba(255, 255, 255, .1); border-bottom: 1px solid rgba(255, 255, 255, .1); }
+  .di:hover .dtip, .di:focus-visible .dtip { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  @media (max-width: 520px) { .dock { --size: 39px; gap: 6px; padding: 8px; border-radius: 20px; } .di { border-radius: 13px; } }
+
+  .cmback { position: fixed; inset: 0; z-index: 35; background: rgba(0, 0, 0, .74); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .cmback.on { opacity: 1; pointer-events: auto; }
+  .cm { position: fixed; right: max(24px, env(safe-area-inset-right, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); width: 48px; height: 48px; z-index: 40; transition: transform .42s cubic-bezier(.3, 1.3, .5, 1); }
+  @media (max-width: 640px) { .cm { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); } }
+  .cmt { position: absolute; inset: 0; z-index: 2; border: 0; border-radius: 50%; background: var(--fg); color: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .5); transition: filter .1s, transform .15s; }
+  .cmt:hover { filter: brightness(1.12); }
+  .cmt:active { transform: scale(.92); }
+  .cmt:focus-visible, .cmi:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .cmt svg { position: absolute; width: 18px; height: 18px; transition: opacity .2s, filter .2s; }
+  .cmt .i-close, .cm.open .cmt .i-open { opacity: 0; filter: blur(10px); }
+  .cm.open .cmt .i-close { opacity: 1; filter: none; }
+  .cm.closing .cmt { animation: cmshake .07s linear infinite; }
+  @keyframes cmshake { 0%, 100% { translate: 0; } 33% { translate: 2px; } 66% { translate: -2px; } }
+  .cmring { position: absolute; inset: 0; z-index: 1; }
+  .cm.closing .cmring { transform: rotate(-360deg); filter: blur(1px); transition: transform var(--spin, .5s) linear; }
+  .cmi { position: absolute; left: 1px; top: 1px; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%; background: #262626; color: var(--fg); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transform: translate(0, 0) scale(.5); opacity: 0; pointer-events: none; transition: transform .38s cubic-bezier(.3, 1.25, .5, 1), opacity .2s, background .15s; transition-delay: calc(var(--i) * 70ms); }
+  .cm.open .cmi { transform: translate(var(--x), var(--y)) scale(1); opacity: 1; pointer-events: auto; transition-delay: calc(var(--i) * 20ms); }
+  .cmi:hover { background: #3d3d3d; }
+  .cmi svg { width: 17px; height: 17px; }
+  .cmi .l { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); font: 500 12px var(--body); color: var(--fg); white-space: nowrap; }
+
+  @media (prefers-reduced-motion: reduce) { .sq, .dg .q, .di, .cm, .cmi { transition: none; } .view, .dock, .cm.closing .cmt { animation: none; } .cm.closing .cmring { transform: none; filter: none; } }
 </style>
 
 <div id="app"></div>
@@ -566,7 +629,7 @@ app.addEventListener('click', e => {
     return;
   }
   const t = e.target.closest('.tile');
-  if (t) return setFilter(t.dataset.f);
+  if (t) { if (t.dataset.f && !MARKVIEWS.includes(app.dataset.view)) go('scope', true); return setFilter(t.dataset.f); }
   const n = e.target.closest('.node[data-p]');
   if (n) return pickPart(n);
   const b = e.target.closest('button.sq[data-k]'); if (!b) return;
@@ -606,4 +669,109 @@ if (PEOPLE.length) {
   });
   paintPeople();
 }
+
+/* --- navigation: the long page becomes views. Sections are sorted into views by their heading, so a project's custom sections land in Overview. --- */
+const ICON = {
+  home: '<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  network: '<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>',
+  route: '<circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/>',
+  columns: '<rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="5" height="13" rx="1"/>',
+  users: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><circle cx="18" cy="9" r="3"/><path d="M17.5 14.2A5 5 0 0 1 22 20"/>',
+  message: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  text: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+  bars: '<path d="M5 20V10M12 20V4M19 20v-8"/>',
+  chart: '<path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>',
+  archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.7 2.4c-.8.4-1.2 1-1.2 1.9M12 17h.01"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>'
+};
+const ic = (n, c) => `<svg class="${c || ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n] || ICON.text}</svg>`;
+// heading -> [view, icon, short name in the circle menu]
+const NAV = {
+  'Where we are': ['overview', 'text', 'Where we are'], 'Progress by area': ['overview', 'bars', 'By area'], 'Progress over time': ['overview', 'chart', 'Over time'],
+  'Everything promised': ['scope', 'grid', 'Features'], 'Not in this release': ['scope', 'archive', 'Not in release'],
+  'How the system fits together': ['system', 'network', 'Diagram'], 'How far a person can get': ['flows', 'route', 'Flows'], 'Board': ['board', 'columns', 'Board'],
+  'Being worked on now': ['team', 'users', 'Working now'],
+  'What is holding things up': ['answers', 'lock', 'Blockers'], 'Questions for you': ['answers', 'help', 'Questions'], 'Suggested next steps': ['answers', 'arrow', 'Next steps'],
+  'Waiting for your OK': ['answers', 'inbox', 'Your OK'], 'Your answers': ['answers', 'copy', 'Your answers']
+};
+const VIEWS = [['overview', 'Overview', 'home'], ['scope', 'Scope', 'grid'], ['system', 'System', 'network'], ['flows', 'Flows', 'route'], ['board', 'Board', 'columns'], ['team', 'Team', 'users'], ['answers', 'Needs you', 'message']];
+const MARKVIEWS = ['scope', 'system', 'board'];
+const LIVE = [];
+(function buildViews() {
+  const pg = app.querySelector('.page'), foot = pg.querySelector('footer'), made = {};
+  [...pg.children].filter(el => el.tagName === 'SECTION').forEach(sec => {
+    const h = sec.querySelector('h2'), title = h ? h.textContent.trim() : '', n = NAV[title] || ['overview', 'text', title || 'More'];
+    sec.dataset.sec = n[2]; sec.dataset.icon = n[1];
+    if (!made[n[0]]) { made[n[0]] = document.createElement('div'); made[n[0]].className = 'view'; made[n[0]].dataset.view = n[0]; made[n[0]].hidden = true; }
+    made[n[0]].appendChild(sec);
+  });
+  VIEWS.forEach(v => { if (made[v[0]]) { pg.insertBefore(made[v[0]], foot); LIVE.push(v); } });
+  const nav = document.createElement('div');
+  nav.innerHTML = `<nav class="dockwrap" aria-label="Views"><div class="dock">${LIVE.map(([id, label, icon]) => `<button class="di" type="button" data-go="${id}" aria-label="${label}"><span class="dic">${ic(icon)}</span>${id === 'answers' && ITEMS.length ? `<span class="dbadge">${ITEMS.length > 99 ? '99+' : ITEMS.length}</span>` : ''}<span class="ddot"></span><span class="dtip">${label}</span></button>`).join('')}</div></nav>
+    <div class="cmback"></div><div class="cm" hidden><div class="cmring"></div><button class="cmt" type="button" aria-label="Jump to a section" aria-expanded="false">${ic('menu', 'i-open')}${ic('x', 'i-close')}</button></div>`;
+  while (nav.firstChild) app.appendChild(nav.firstChild);
+})();
+const cm = app.querySelector('.cm'), cmring = app.querySelector('.cmring'), cmback = app.querySelector('.cmback'), cmt = app.querySelector('.cmt');
+function closeMenu(spin) {
+  if (!cm.classList.contains('open')) return;
+  const n = cmring.children.length;
+  cm.classList.remove('open'); cmback.classList.remove('on'); cmt.setAttribute('aria-expanded', 'false'); cm.style.transform = '';
+  if (spin && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cm.style.setProperty('--spin', (n + 2) * 70 + 'ms'); cm.classList.add('closing');
+    setTimeout(() => cm.classList.remove('closing'), (n + 2) * 70 + 60);
+  }
+}
+function openMenu() {
+  const r = cm.getBoundingClientRect();
+  cm.style.transform = `translate(${innerWidth / 2 - (r.left + r.width / 2)}px, ${innerHeight / 2 - (r.top + r.height / 2)}px)`;
+  cm.classList.add('open'); cmback.classList.add('on'); cmt.setAttribute('aria-expanded', 'true');
+}
+function show(id, keepScroll) {
+  if (!LIVE.some(v => v[0] === id)) id = LIVE.length ? LIVE[0][0] : '';
+  if (!id) return;
+  closeMenu(false);
+  app.querySelectorAll('.view').forEach(v => { v.hidden = v.dataset.view !== id; });
+  app.dataset.view = id;
+  app.querySelectorAll('.di').forEach(b => { if (b.dataset.go === id) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  const secs = [...app.querySelectorAll(`.view[data-view="${id}"] > section`)], rad = Math.min(125, (innerWidth - 150) / 2);
+  cm.hidden = secs.length < 2;
+  cmring.innerHTML = secs.map((sec, i) => { const a = 2 * Math.PI * i / secs.length - Math.PI / 2;
+    return `<button class="cmi" type="button" data-jump="${i}" style="--i:${i};--x:${(rad * Math.cos(a)).toFixed(1)}px;--y:${(rad * Math.sin(a)).toFixed(1)}px">${ic(sec.dataset.icon)}<span class="l">${esc(sec.dataset.sec)}</span></button>`; }).join('');
+  if (!keepScroll) scrollTo(0, 0);
+}
+function go(id, keepScroll) {
+  try { if (location.hash.slice(1) !== id) history.replaceState(null, '', '#' + id); } catch (e) { /* the view still switches */ }
+  show(id, keepScroll);
+}
+addEventListener('hashchange', () => show(location.hash.slice(1)));
+app.addEventListener('click', e => {
+  const d = e.target.closest('.di[data-go]');
+  if (d) return go(d.dataset.go);
+  if (e.target.closest('.cmt')) return cm.classList.contains('open') ? closeMenu(true) : openMenu();
+  if (e.target.closest('.cmback')) return closeMenu(true);
+  const j = e.target.closest('.cmi[data-jump]');
+  if (j) {
+    const sec = app.querySelectorAll(`.view[data-view="${app.dataset.view}"] > section`)[+j.dataset.jump];
+    closeMenu(false);
+    if (sec) sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }
+});
+addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(true); });
+/* the dock's icons grow toward the pointer, on devices that have one */
+(function magnify() {
+  const dock = app.querySelector('.dock');
+  if (!dock || !matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const items = [...dock.querySelectorAll('.di')]; let centres = [];
+  dock.addEventListener('mouseenter', () => { centres = items.map(b => { const r = b.getBoundingClientRect(); return r.left + r.width / 2; }); });
+  dock.addEventListener('mousemove', e => items.forEach((b, i) => { const dist = Math.abs(e.clientX - centres[i]); b.style.setProperty('--s', dist < 150 ? (1 + 0.5 * (1 - dist / 150)).toFixed(3) : '1'); }));
+  dock.addEventListener('mouseleave', () => items.forEach(b => b.style.setProperty('--s', '1')));
+})();
+show(location.hash.slice(1) || 'overview', true);
 </script>

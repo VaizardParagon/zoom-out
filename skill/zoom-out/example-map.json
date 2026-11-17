@@ -27,6 +27,7 @@
       { "date": "2026-10-02", "summary": "Delay text message.", "features": ["delay-text"] }
     ] }
   ],
+  "planPaths": ["docs/plan/**"],
   "facts": ["Live build 4c1e9a0", "Text messages off"],
   "hasLive": true,
   "tracker": "linear",
@@ -46,18 +47,18 @@
   ],
   "links": [["search", "checkout"], ["checkout", "ticket"], ["checkout", "payments"], ["ticket", "ramp"], ["ramp", "messages"]],
   "features": [
-    { "id": "search-crossings", "title": "Search crossings", "part": "search", "status": "live", "evidence": "Checked on the live site 10 Nov, build 4c1e9a0.", "checked": "2026-11-10", "source": "Wayfinder map: Booking scope" },
-    { "id": "vehicle-size", "title": "Vehicle size check", "part": "search", "status": "tested", "evidence": "tests/booking/vehicle_size.test.ts passes in CI run 812.", "next": "Try it on the live site.", "checked": "2026-11-12", "source": "Wayfinder map: Booking scope" },
-    { "id": "group-booking", "title": "Group booking for ten or more", "part": "search", "status": "none", "checked": "2026-11-12", "source": "Client meeting notes, 4 Nov" },
-    { "id": "card-payment", "title": "Card payment", "part": "checkout", "status": "tested", "evidence": "Checkout tests pass with test cards.", "blocked": { "kind": "off", "note": "The live payment account is not switched on." }, "checked": "2026-11-12", "source": "Wayfinder map: Payments" },
-    { "id": "vouchers", "title": "Vouchers", "part": "checkout", "status": "progress", "evidence": "Open pull request #208.", "work": { "who": "Maya R", "ticket": "FER-97", "url": "https://linear.app/example/issue/FER-97", "branch": "feat/vouchers" }, "checked": "2026-11-12", "source": "Kickoff interview" },
-    { "id": "refunds", "title": "Refunds", "part": "checkout", "status": "built", "evidence": "Merged in src/payments/refund.ts. No test covers it.", "blocked": { "kind": "decision", "note": "The client has not decided the refund rule for weather cancellations.", "since": "2026-11-04" }, "checked": "2026-11-12", "source": "Wayfinder map: Payments" },
-    { "id": "e-ticket", "title": "E-ticket with QR code", "part": "ticket", "status": "tested", "evidence": "tests/tickets/qr.test.ts passes in CI run 812.", "checked": "2026-11-12", "source": "Wayfinder map: Tickets" },
-    { "id": "kiosk-print", "title": "Print a ticket at the kiosk", "part": "ticket", "status": "none", "blocked": { "kind": "build", "note": "Waits for kiosk mode, which has no code yet." }, "checked": "2026-11-12", "source": "Kickoff interview" },
-    { "id": "scan", "title": "Scan tickets at the ramp", "part": "ramp", "status": "built", "evidence": "Merged in apps/ramp. Not tried on a real scanner.", "checked": "2026-11-12", "source": "Wayfinder map: Boarding" },
-    { "id": "offline-scan", "title": "Scan with no signal", "part": "ramp", "status": "progress", "evidence": "Open pull request #215.", "work": { "who": "Sam K", "ticket": "FER-119", "url": "https://linear.app/example/issue/FER-119", "branch": "feat/offline-scan" }, "checked": "2026-11-12", "source": "Wayfinder map: Boarding" },
-    { "id": "confirm-email", "title": "Booking confirmation email", "part": "messages", "status": "live", "evidence": "Received from the live site 10 Nov.", "checked": "2026-11-10", "source": "Wayfinder map: Messages" },
-    { "id": "delay-text", "title": "Delay text message", "part": "messages", "status": "built", "evidence": "Merged in src/notify/delay.ts. No test covers it.", "blocked": { "kind": "off", "note": "Text messages are switched off on the live site." }, "checked": "2026-11-12", "source": "Wayfinder map: Messages" }
+    { "id": "search-crossings", "paths": ["src/booking/search.ts","tests/booking/search.test.ts"], "title": "Search crossings", "part": "search", "status": "live", "evidence": "Checked on the live site 10 Nov, build 4c1e9a0.", "checked": "2026-11-10", "source": "Wayfinder map: Booking scope" },
+    { "id": "vehicle-size", "paths": ["src/booking/vehicle.ts","tests/booking/vehicle_size.test.ts"], "title": "Vehicle size check", "part": "search", "status": "tested", "evidence": "tests/booking/vehicle_size.test.ts passes in CI run 812.", "next": "Try it on the live site.", "checked": "2026-11-12", "source": "Wayfinder map: Booking scope" },
+    { "id": "group-booking", "paths": ["src/booking/group/"], "title": "Group booking for ten or more", "part": "search", "status": "none", "checked": "2026-11-12", "source": "Client meeting notes, 4 Nov" },
+    { "id": "card-payment", "paths": ["src/payments/card.ts","tests/checkout/**"], "title": "Card payment", "part": "checkout", "status": "tested", "evidence": "Checkout tests pass with test cards.", "blocked": { "kind": "off", "note": "The live payment account is not switched on." }, "checked": "2026-11-12", "source": "Wayfinder map: Payments" },
+    { "id": "vouchers", "paths": ["src/payments/voucher.ts"], "title": "Vouchers", "part": "checkout", "status": "progress", "evidence": "Open pull request #208.", "work": { "who": "Maya R", "ticket": "FER-97", "url": "https://linear.app/example/issue/FER-97", "branch": "feat/vouchers" }, "checked": "2026-11-12", "source": "Kickoff interview" },
+    { "id": "refunds", "paths": ["src/payments/refund.ts"], "title": "Refunds", "part": "checkout", "status": "built", "evidence": "Merged in src/payments/refund.ts. No test covers it.", "blocked": { "kind": "decision", "note": "The client has not decided the refund rule for weather cancellations.", "since": "2026-11-04" }, "checked": "2026-11-12", "source": "Wayfinder map: Payments" },
+    { "id": "e-ticket", "paths": ["src/tickets/qr.ts","tests/tickets/qr.test.ts"], "title": "E-ticket with QR code", "part": "ticket", "status": "tested", "evidence": "tests/tickets/qr.test.ts passes in CI run 812.", "checked": "2026-11-12", "source": "Wayfinder map: Tickets" },
+    { "id": "kiosk-print", "paths": ["apps/kiosk/"], "title": "Print a ticket at the kiosk", "part": "ticket", "status": "none", "blocked": { "kind": "build", "note": "Waits for kiosk mode, which has no code yet." }, "checked": "2026-11-12", "source": "Kickoff interview" },
+    { "id": "scan", "paths": ["apps/ramp/scan.ts"], "title": "Scan tickets at the ramp", "part": "ramp", "status": "built", "evidence": "Merged in apps/ramp. Not tried on a real scanner.", "checked": "2026-11-12", "source": "Wayfinder map: Boarding" },
+    { "id": "offline-scan", "paths": ["apps/ramp/offline.ts"], "title": "Scan with no signal", "part": "ramp", "status": "progress", "evidence": "Open pull request #215.", "work": { "who": "Sam K", "ticket": "FER-119", "url": "https://linear.app/example/issue/FER-119", "branch": "feat/offline-scan" }, "checked": "2026-11-12", "source": "Wayfinder map: Boarding" },
+    { "id": "confirm-email", "paths": ["src/notify/confirm.ts"], "title": "Booking confirmation email", "part": "messages", "status": "live", "evidence": "Received from the live site 10 Nov.", "checked": "2026-11-10", "source": "Wayfinder map: Messages" },
+    { "id": "delay-text", "paths": ["src/notify/delay.ts"], "title": "Delay text message", "part": "messages", "status": "built", "evidence": "Merged in src/notify/delay.ts. No test covers it.", "blocked": { "kind": "off", "note": "Text messages are switched off on the live site." }, "checked": "2026-11-12", "source": "Wayfinder map: Messages" }
   ],
   "flows": [
     {

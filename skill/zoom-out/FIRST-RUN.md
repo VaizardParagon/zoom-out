@@ -12,7 +12,7 @@ The plan is the source of the promise. Code is only a cross-check: a feature nob
 
    Then ask the human once: "Is there anything else that says what was promised, such as interview notes, meeting notes or client messages?" Done when every source found has been read in full and the human has answered.
 
-2. **Draft the features.** A feature is one thing a person can do with the system, or one thing the system must do, small enough to have a single status. Title each in the human's plain words, the way they would say it to a client. Give each a `source`. Things the plan rules out go to `parked`. Then scan the code for anything built that the draft lacks, and hold those as proposals for step 5.
+2. **Draft the features.** A feature is one thing a person can do with the system, or one thing the system must do, small enough to have a single status. Title each in the human's plain words, the way they would say it to a client. Give each a `source`, and `paths`: the files it lives in and the tests that exercise it, which is what lets later refreshes skip it when nothing there changed. Record the plan documents you read in `planPaths`. Things the plan rules out go to `parked`. Then scan the code for anything built that the draft lacks, and hold those as proposals for step 5.
 
 3. **Draft the boxes.** A box (`parts`) is a screen someone uses or a part working in the background. Aim for 10 to 25, with titles of 20 characters or fewer, and put every feature in exactly one box. Group boxes into `bands` by who uses them (for example applicants, staff, background). Add `links` for how a person or the data moves from one box to the next, and choose each box's `col` so linked boxes sit side by side or directly above and below each other. An outside service the system depends on is a box marked `external`.
 
@@ -22,4 +22,4 @@ The plan is the source of the promise. Code is only a cross-check: a feature nob
 
 6. **Check the page fits** (see "Does the default page fit?" in `SKILL.md`). Set `hasLive` to false when the project has no live site.
 
-7. **Join Refresh at step 3**, with every feature at `none` until its evidence says otherwise.
+7. **Write the map and run a full Refresh.** Write `system-map/map.json` with every feature at `none`, then follow Refresh in `SKILL.md` using `map.mjs scan --all`, so every feature is rechecked once. `MAP-FORMAT.md` has the format.

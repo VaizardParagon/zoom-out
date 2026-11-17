@@ -12,8 +12,9 @@
 | `headline` | One plain sentence: how far a real user gets today and where they stop. |
 | `recap` | One short paragraph: what happened since the last run and where that leaves the project. Shown as "Where we are". **Checked:** required. |
 | `nextSteps` | One to five suggested moves, most valuable first. Each has `step`, `why`, optional `skill` (a slash command such as `/to-questionnaire`) and optional `prompt`: text an agent starting cold in this repo could be handed to do the step. **Checked:** a `prompt` carries three labelled lines, `Evidence:`, `Done when:` and `Needs the human's OK:`. |
-| `people` | Everyone who has worked in the repo, each with `name`, `now` (ids of the features they are on right now) and `trail` (their work history: entries of `date`, `summary`, `features`). The page's picker switches between them. **Checked:** names are unique and every id exists. |
+| `people` | Everyone who has worked in the repo, each with `name`, `emails` (to merge one person's git identities), `now` (ids of the features they are on right now) and `trail` (their work history: entries of `date`, `summary`, `features`). `map.mjs scan` fills all of it from git. The page's picker switches between them. **Checked:** names are unique and every id exists. |
 | `runBy` | The `name` of the person who ran this map. The picker starts on them. **Checked:** is one of `people`. |
+| `planPaths` | The plan documents the promise was read from, as paths or globs in the repo. A refresh re-reads one only when it changed. |
 | `facts` | Optional short chips under the counts, for conditions that colour everything else: the live build, "Email off". |
 | `hasLive` | `false` when the project has no live site. The ladder then tops out at `tested`. |
 | `tracker` | `"linear"`, `"github"` or `null`. |
@@ -42,6 +43,7 @@
 | `id` | Short and stable. It never changes once set, because runs are compared by id. |
 | `title` | Plain words, as the human would say it to a client. |
 | `part` | The id of its box. **Checked.** |
+| `paths` | The files this feature lives in: folders, files, or globs with `*` and `**`, from the repo root. Tests that exercise it belong here too. A refresh rechecks a feature only when one of these changed, so a feature with no `paths` is rechecked every time. |
 | `status` | `none`, `progress`, `built`, `tested` or `live`. **Checked.** |
 | `evidence` | What earned the status, as something the human could go and look at. **Checked:** required above `none`. |
 | `next` | Optional. The one thing that would move it up a step. |
@@ -61,6 +63,40 @@ The page colours a step by its least-proven feature and marks where each lane st
 
 **Checked:** every feature id exists; every lane named in a step is in `lanes`.
 
-## What the page adds without a field
+## A patch
 
-The build reads the git history of `system-map/map.json` and hands the page the ladder counts at each refresh, for "Progress over time". That series lives in git alone and is never written into the map. The map's age, the per-area percentages and the board are computed from the fields above.
+What `map.mjs apply <file>` takes: a JSON object holding only what changes. Every key is optional.
+
+```json
+{
+  "features": { "refunds": { "status": "tested", "evidence": "tests/payments/refund.test.ts passes in CI run 840.", "blocked": null } },
+  "rechecked": ["card-payment"],
+  "add": [ { "id": "gift-cards", "title": "Gift cards", "part": "checkout", "source": "Client message, 14 Nov", "paths": ["src/payments/giftcard.ts"] } ],
+  "remove": ["loyalty-points"],
+  "top": { "recap": "…", "nextSteps": [], "questions": [] }
+}
+```
+
+- `features`: fields to set on a feature, by id. `null` removes a field. Setting `status` or `evidence` stamps `checked` with today.
+- `rechecked`: features you looked at and left unchanged. Their `checked` is stamped.
+- `add`: new features. `status` defaults to `none`.
+- `remove`: feature ids to drop. They are also taken out of flows and work trails.
+- `top`: top-level fields to replace whole, such as `recap`, `headline`, `nextSteps`, `questions`, `pending`, `parked`, `sources`.
+
+## history.json
+
+The build writes `system-map/history.json` beside the map on every run, for readers outside this skill. Leave it to the build: it is rewritten whole each time.
+
+```json
+{
+  "project": "Tidewater Ferries booking",
+  "updated": "2026-11-12",
+  "hasLive": true,
+  "points": [
+    { "date": "2026-11-04", "total": 11, "blocked": 4, "counts": { "none": 4, "progress": 3, "built": 3, "tested": 1, "live": 0 } },
+    { "date": "2026-11-12", "total": 12, "blocked": 4, "counts": { "none": 2, "progress": 2, "built": 3, "tested": 3, "live": 2 } }
+  ]
+}
+```
+
+`points` holds one entry per refresh date, oldest first, read from the last 60 committed versions of `map.json` plus the map being built. The page's "Progress over time" is drawn from the same series. The map's age, the per-area percentages and the board are computed from the map's own fields.

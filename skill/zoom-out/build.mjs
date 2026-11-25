@@ -97,16 +97,13 @@ feats.forEach(f => {
   });
 });
 // Access tables: optional, one table per matrix, on the page's Access view.
-// A matrix title becomes a section heading, so it must not repeat a heading the page already uses.
-const HEADINGS = ['Where we are', 'Progress by area', 'Progress over time', 'Everything promised', 'Not in this release', 'How the system fits together',
-  'How far a person can get', 'Board', 'Being worked on now', 'What is holding things up', 'Questions for you', 'Suggested next steps', 'Waiting for your OK', 'Your answers'];
+// The page routes a matrix's section by its data-mx attribute, so any title works, even one like "Board".
 need(M.matrices == null || Array.isArray(M.matrices), 'matrices: must be a list');
 const MXS = Array.isArray(M.matrices) ? M.matrices : [];
 MXS.forEach((mx, i) => {
   const n = `matrices ${i + 1}${mx && typeof mx.title === 'string' ? ` (${mx.title})` : ''}`;
   if (!mx || typeof mx !== 'object' || Array.isArray(mx)) return need(false, `${n}: must be an object`);
   need(typeof mx.title === 'string' && mx.title.trim(), `${n}: needs title`);
-  need(!HEADINGS.includes(String(mx.title).trim()), `${n}: title "${mx.title}" is a heading the page already uses`);
   need(mx.note == null || typeof mx.note === 'string', `${n}: note must be text`);
   const cols = Array.isArray(mx.columns) ? mx.columns : [], groups = Array.isArray(mx.groups) ? mx.groups : [];
   need(cols.length, `${n}: columns: need at least one, each with key and label`);

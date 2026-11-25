@@ -81,19 +81,48 @@ test('each matrix is a real table with column and row headers, and every tick is
   }
 });
 
-test('counts are computed from the cells', () => {
+test('counts are computed from the cells, each shown in its own column header and row', () => {
   const mx = example.matrices[0], html = renderMatrices(example), rows = mx.groups.flatMap(g => g.rows);
-  for (const c of mx.columns) {
+  const heads = [...html.matchAll(/<th scope="col" data-c="[^"]*">([\s\S]*?)<\/th>/g)].map(m => m[1]);
+  assert.equal(heads.length, mx.columns.length, 'one header per column');
+  mx.columns.forEach((c, j) => {
     const n = mx.cells.filter(([k]) => k === c.key).length;
-    assert.ok(html.includes(`data-mxc="${c.key}" aria-pressed="false">`) && html.includes(`${n} of ${rows.length}</span>`), `column ${c.key} shows ${n}`);
-  }
+    assert.ok(heads[j].includes(`>${c.label}</span>`), `header ${j + 1} is ${c.label}`);
+    assert.ok(heads[j].includes(`<span class="mxn">${n} of ${rows.length}</span>`), `header ${c.label} shows ${n} of ${rows.length}\n${heads[j]}`);
+  });
+  const trs = [...html.matchAll(/<tr data-r="[^"]*">([\s\S]*?)<\/tr>/g)].map(m => m[1]);
+  assert.equal(trs.length, rows.length, 'one table row per row');
+  rows.forEach((r, k) => {
+    const n = mx.cells.filter(([, x]) => x === r.key).length;
+    assert.ok(trs[k].includes(`>${r.label}</span>`), `row ${k + 1} is ${r.label}`);
+    assert.ok(trs[k].endsWith(`<td class="mxcn">${n}</td>`), `row ${r.label} shows ${n} ticks\n${trs[k]}`);
+  });
+});
+
+test('keys never go into the page as attributes, so a key HTML cannot keep as written still works', () => {
+  const map = structuredClone(example), mx = map.matrices[0];
+  const rename = { ramp: 'ramp\r1', scan: 'scan\r\n2' };
+  mx.columns.forEach(c => { if (rename[c.key]) c.key = rename[c.key]; });
+  mx.groups.forEach(g => g.rows.forEach(r => { if (rename[r.key]) r.key = rename[r.key]; }));
+  mx.cells = mx.cells.map(([c, r]) => [rename[c] || c, rename[r] || r]);
+  const html = renderMatrices(map);
+  for (const [, v] of html.matchAll(/data-(?:c|r|mxc|mxr)="([^"]*)"/g)) assert.match(v, /^\d+$/, `data attribute holds an index, not a key: ${JSON.stringify(v)}`);
+  assert.equal(build(map).status, 0);
+});
+
+test('a matrix may be called like a page section ("Board"); it is routed by data-mx, not by its heading', () => {
+  const map = structuredClone(example); map.matrices[0].title = 'Board';
+  const r = build(map);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!r.html.includes("NAV[String(mx.title)"), 'matrix titles are not added to the heading routes');
+  assert.match(r.html, /sec\.dataset\.mx != null/, 'matrix sections are routed by their data-mx attribute');
 });
 
 test('the build names what is wrong in a broken matrix', () => {
   const bad = { ...without(), matrices: [{ title: 'Board', columns: [{ key: 'a', label: 'A' }, { key: 'a', label: 'B' }], groups: [{ label: 'G', rows: [{ key: 'x', label: 'X' }] }], cells: [['a', 'nope'], ['zz', 'x']], questions: [3] }] };
   const r = build(bad);
   assert.equal(r.status, 1);
-  for (const msg of ['duplicate matrices 1 (Board) column key: a', 'cell ["a","nope"]', 'cell ["zz","x"]', 'questions must be a list of text', 'is a heading the page already uses']) assert.ok(r.stderr.includes(msg), `says: ${msg}\n${r.stderr}`);
+  for (const msg of ['duplicate matrices 1 (Board) column key: a', 'cell ["a","nope"]', 'cell ["zz","x"]', 'questions must be a list of text']) assert.ok(r.stderr.includes(msg), `says: ${msg}\n${r.stderr}`);
 });
 
 test('the build refuses matrices that are not a list', () => {

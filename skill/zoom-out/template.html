@@ -257,8 +257,14 @@
 /*<matrices>*/
   /* access tables: one real table per matrix. It scrolls sideways inside its own box, never the page, and the item column stays put. */
   #app[data-view="access"] .tiles { display: none; }
+  section[data-mx] { overflow-wrap: anywhere; min-width: 0; }
+  section[data-mx] .mx { overflow-wrap: normal; }
   .mxst { font-size: 14px; color: var(--muted); min-height: 1.5em; max-width: 72ch; }
   .mxst strong { color: var(--fg); font-weight: 600; }
+  .mxsw { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .mxsw .mxb { font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 3px 9px; cursor: pointer; text-align: left; }
+  .mxsw .mxb:hover { background: var(--card-2); }
+  .mxsw .mxb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .mxwrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--bg); }
   .mxwrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .mx { border-collapse: separate; border-spacing: 0; font-size: 13.5px; width: 100%; }
@@ -280,6 +286,7 @@
   .mx .mxg th span { position: sticky; left: 10px; display: inline-block; }
   .mx .mxcn { font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px 10px; font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; }
   .mx td { min-width: 92px; height: 40px; transition: opacity .15s; }
+  .mx td.mxcn { min-width: 0; }
   .mxt { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: var(--r-ctl); background: var(--tested); color: #03170b; vertical-align: middle; }
   .mxt svg { width: 13px; height: 13px; }
   .mx .mxon, .mx tr.mxon > * { background: var(--card-2); }
@@ -530,9 +537,9 @@ const MXHINT = 'Tap a column to see only the rows it ticks. Tap a row to see whi
 const MXTICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
 function mxSection(mx, i) {
   const X = MX[i], qs = mx.questions || [];
-  const head = `<thead><tr><th scope="col" class="mxc0"><span class="mxsr">Item</span></th>${X.cols.map(c => `<th scope="col" data-c="${esc(c.key)}"><button class="mxb" type="button" data-mxc="${esc(c.key)}" aria-pressed="false"><span class="mxl">${esc(c.label)}</span>${c.sub ? `<small>${esc(c.sub)}</small>` : ''}<span class="mxn">${X.colN(c.key)} of ${X.rows.length}</span></button></th>`).join('')}<th scope="col" class="mxcn">Ticks</th></tr></thead>`;
-  const body = (mx.groups || []).map(g => `<tbody><tr class="mxg"><th scope="rowgroup" colspan="${X.cols.length + 2}"><span>${esc(g.label)}</span></th></tr>${(g.rows || []).map(r => `<tr data-r="${esc(r.key)}"><th scope="row"><button class="mxb" type="button" data-mxr="${esc(r.key)}" aria-pressed="false"${r.explanation ? ` title="${esc(r.explanation)}"` : ''}><span class="mxl">${esc(r.label)}</span>${r.tag ? `<span class="mxtag">${esc(r.tag)}</span>` : ''}</button></th>${X.cols.map(c => `<td data-c="${esc(c.key)}">${X.has(c.key, r.key) ? `<span class="mxt" role="img" aria-label="${esc(c.label + ': ' + r.label)}">${MXTICK}</span>` : ''}</td>`).join('')}<td class="mxcn">${X.rowN(r.key)}</td></tr>`).join('')}</tbody>`).join('');
-  return `<section data-mx="${i}"><h2>${esc(mx.title)}</h2>${mx.note ? `<p class="muted">${esc(mx.note)}</p>` : ''}<p class="mxst" role="status">${MXHINT}</p>
+  const head = `<thead><tr><th scope="col" class="mxc0"><span class="mxsr">Item</span></th>${X.cols.map((c, j) => `<th scope="col" data-c="${j}"><button class="mxb" type="button" data-mxc="${j}" aria-pressed="false"><span class="mxl">${esc(c.label)}</span>${c.sub ? `<small>${esc(c.sub)}</small>` : ''}<span class="mxn">${X.colN(c.key)} of ${X.rows.length}</span></button></th>`).join('')}<th scope="col" class="mxcn">Ticks</th></tr></thead>`;
+  const body = (mx.groups || []).map(g => `<tbody><tr class="mxg"><th scope="rowgroup" colspan="${X.cols.length + 2}"><span>${esc(g.label)}</span></th></tr>${(g.rows || []).map(r => `<tr data-r="${X.rows.indexOf(r)}"><th scope="row"><button class="mxb" type="button" data-mxr="${X.rows.indexOf(r)}" aria-pressed="false"${r.explanation ? ` title="${esc(r.explanation)}"` : ''}><span class="mxl">${esc(r.label)}</span>${r.tag ? `<span class="mxtag">${esc(r.tag)}</span>` : ''}</button></th>${X.cols.map((c, j) => `<td data-c="${j}">${X.has(c.key, r.key) ? `<span class="mxt" role="img" aria-label="${esc(c.label + ': ' + r.label)}">${MXTICK}</span>` : ''}</td>`).join('')}<td class="mxcn">${X.rowN(r.key)}</td></tr>`).join('')}</tbody>`).join('');
+  return `<section data-mx="${i}"><h2>${esc(mx.title)}</h2>${mx.note ? `<p class="muted">${esc(mx.note)}</p>` : ''}<p class="mxst" role="status">${MXHINT}</p><p class="mxsw" hidden></p>
     <div class="mxwrap" role="region" tabindex="0" aria-label="${esc(mx.title)}, scrolls sideways"><table class="mx"><caption class="mxsr">${esc(mx.title)}</caption>${head}${body}</table></div>
     ${qs.length ? `<h3>Open questions</h3><ul class="plain">${qs.map(q => `<li>${esc(q)}</li>`).join('')}</ul>` : ''}</section>`;
 }
@@ -698,24 +705,31 @@ app.addEventListener('keydown', e => {
 
 /*<matrices>*/
 app.addEventListener('click', e => {
-  const b = e.target.closest('.mxb[data-mxc], .mxb[data-mxr]'); if (!b) return;
-  const sec = b.closest('[data-mx]'), X = MX[+sec.dataset.mx], st = sec.querySelector('.mxst'), again = b.getAttribute('aria-pressed') === 'true';
+  const t = e.target.closest('.mxb[data-mxc], .mxb[data-mxr]'); if (!t) return;
+  const sec = t.closest('[data-mx]'), X = MX[+sec.dataset.mx], st = sec.querySelector('.mxst'), sw = sec.querySelector('.mxsw');
+  // a "Switch to" button stands for its column's header
+  const b = t.closest('.mxsw') ? sec.querySelector(`thead .mxb[data-mxc="${t.dataset.mxc}"]`) : t, again = b.getAttribute('aria-pressed') === 'true';
   sec.querySelectorAll('.mxb[aria-pressed="true"]').forEach(x => x.setAttribute('aria-pressed', 'false'));
-  sec.querySelectorAll('tbody, tr').forEach(x => { x.hidden = false; });
+  sw.hidden = true; sw.innerHTML = '';
+  sec.querySelectorAll('tbody, tr, [data-c]').forEach(x => { x.hidden = false; });
+  sec.querySelectorAll('.mxg th').forEach(x => { x.colSpan = X.cols.length + 2; });
   sec.querySelectorAll('.mxon, .mxoff').forEach(x => x.classList.remove('mxon', 'mxoff'));
   if (again) { st.textContent = MXHINT; return; }
   b.setAttribute('aria-pressed', 'true');
   if (b.dataset.mxc != null) {
-    const c = X.cols.find(x => x.key === b.dataset.mxc), n = X.colN(c.key);
+    const c = X.cols[+b.dataset.mxc], n = X.colN(c.key);
     sec.querySelectorAll('tbody').forEach(g => { let any = false;
-      g.querySelectorAll('tr[data-r]').forEach(tr => { const keep = X.has(c.key, tr.dataset.r); tr.hidden = !keep; any = any || keep; });
+      g.querySelectorAll('tr[data-r]').forEach(tr => { const keep = X.has(c.key, X.rows[+tr.dataset.r].key); tr.hidden = !keep; any = any || keep; });
       g.hidden = !any; });
-    sec.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('mxon', x.dataset.c === c.key));
-    st.innerHTML = `<strong>${esc(c.label)}</strong> ticks ${n ? `${n} of ${X.rows.length} rows` : 'no rows'}. Tap it again to show every row.`;
+    sec.querySelectorAll('[data-c]').forEach(x => { x.hidden = x.dataset.c !== b.dataset.mxc; });
+    sec.querySelectorAll('.mxg th').forEach(x => { x.colSpan = 3; });
+    st.innerHTML = `<strong>${esc(c.label)}</strong> ticks ${n ? `${n} of ${X.rows.length} rows` : 'no rows'}. Tap it again to show every row and column.`;
+    if (X.cols.length > 1) { sw.innerHTML = `Switch to ${X.cols.map((x, j) => x === c ? '' : `<button class="mxb" type="button" data-mxc="${j}">${esc(x.label)}</button>`).join(' ')}`; sw.hidden = false; }
+    if (t !== b) b.focus();
   } else {
-    const r = X.rows.find(x => x.key === b.dataset.mxr), by = X.cols.filter(c => X.has(c.key, r.key));
+    const r = X.rows[+b.dataset.mxr], by = X.cols.filter(c => X.has(c.key, r.key));
     b.closest('tr').classList.add('mxon');
-    sec.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('mxoff', !by.some(c => c.key === x.dataset.c)));
+    sec.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('mxoff', !by.includes(X.cols[+x.dataset.c])));
     st.innerHTML = `<strong>${esc(r.label)}</strong>: ${by.length ? `ticked by ${by.map(c => esc(c.label)).join(', ')} (${by.length} of ${X.cols.length})` : 'no column ticks it'}.${r.explanation ? ' ' + esc(r.explanation) : ''} Tap it again to clear.`;
   }
 });
@@ -784,7 +798,6 @@ const NAV = {
 };
 const VIEWS = [['overview', 'Overview', 'home'], ['scope', 'Scope', 'grid'], ['system', 'System', 'network'], ['flows', 'Flows', 'route'], ['board', 'Board', 'columns'], ['team', 'Team', 'users'], ['answers', 'Needs you', 'message']];
 /*<matrices>*/
-(M.matrices || []).forEach(mx => { NAV[String(mx.title).trim()] = ['access', 'table', String(mx.title).trim()]; });
 VIEWS.splice(VIEWS.length - 1, 0, ['access', 'Access', 'table']);
 /*</matrices>*/
 const MARKVIEWS = ['scope', 'system', 'board'];
@@ -792,6 +805,13 @@ const LIVE = [];
 (function buildViews() {
   const pg = app.querySelector('.page'), foot = pg.querySelector('footer'), made = {};
   [...pg.children].filter(el => el.tagName === 'SECTION').forEach(sec => {
+/*<matrices>*/
+    if (sec.dataset.mx != null) {
+      sec.dataset.sec = String(M.matrices[+sec.dataset.mx].title).trim(); sec.dataset.icon = 'table';
+      if (!made.access) { made.access = document.createElement('div'); made.access.className = 'view'; made.access.dataset.view = 'access'; made.access.hidden = true; }
+      return made.access.appendChild(sec);
+    }
+/*</matrices>*/
     const h = sec.querySelector('h2'), title = h ? h.textContent.trim() : '', n = NAV[title] || ['overview', 'text', title || 'More'];
     sec.dataset.sec = n[2]; sec.dataset.icon = n[1];
     if (!made[n[0]]) { made[n[0]] = document.createElement('div'); made[n[0]].className = 'view'; made[n[0]].dataset.view = n[0]; made[n[0]].hidden = true; }

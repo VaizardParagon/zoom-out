@@ -70,7 +70,7 @@ A table of columns against rows, with a tick where a column has a row: account t
 
 | Field | What it holds |
 |---|---|
-| `title` | The section heading. **Checked:** required, unique, and not a heading the page already uses ("Board", "Questions for you"). |
+| `title` | The section heading, and the section's name in the circle menu. **Checked:** required and unique. It may repeat a heading the page uses elsewhere, such as "Board". |
 | `note` | Optional. One or two sentences under the title: where the table comes from, what it leaves out. |
 | `columns` | `key`, `label`, optional `sub` (a short second line, such as a version). **Checked:** at least one; keys unique. |
 | `groups` | Row groups, each with `label` and `rows`. A row has `key`, `label`, optional `explanation` (one line, shown on hover and when the row is tapped) and optional `tag` (a short marker beside the label, such as "assigned only"). **Checked:** at least one group; each group has rows; row keys unique across the matrix. |
@@ -97,7 +97,7 @@ Counts (ticks per column, per row) are worked out by the page from `cells`. Neve
 ]
 ```
 
-The page draws each matrix as a real table with column and row headers; each tick is announced as "column: row". Tapping a column header shows only the rows it ticks; tapping a row shows which columns tick it; tapping again clears. On a phone the table scrolls sideways inside its own box, with the row labels held in place.
+The page draws each matrix as a real table with column and row headers; each tick is announced as "column: row". Tapping a column header shows only that column and the rows it ticks; tapping a row shows which columns tick it; tapping again clears. On a phone the table scrolls sideways inside its own box, with the row labels held in place.
 
 A map without `matrices` gets exactly the page it had before access tables existed: the build leaves the template's access-table code out. That code sits in `template.html` between lines reading `/*<matrices>*/` and `/*</matrices>*/`; keep those lines when changing a project's copy. A project's copy without them shows no access table, and the build says `TEMPLATE OUT OF DATE`.
 

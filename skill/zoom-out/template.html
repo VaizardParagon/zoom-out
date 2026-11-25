@@ -254,6 +254,39 @@
   footer { padding: 16px 4px 0; display: flex; flex-direction: column; gap: 8px; }
   [hidden] { display: none !important; }
 
+/*<matrices>*/
+  /* access tables: one real table per matrix. It scrolls sideways inside its own box, never the page, and the item column stays put. */
+  #app[data-view="access"] .tiles { display: none; }
+  .mxst { font-size: 14px; color: var(--muted); min-height: 1.5em; max-width: 72ch; }
+  .mxst strong { color: var(--fg); font-weight: 600; }
+  .mxwrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--bg); }
+  .mxwrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .mx { border-collapse: separate; border-spacing: 0; font-size: 13.5px; width: 100%; }
+  .mx th, .mx td { border-bottom: 1px solid var(--line); padding: 0; text-align: center; vertical-align: middle; font-weight: 400; }
+  .mx tbody:last-child tr:last-child > * { border-bottom: 0; }
+  .mx thead th { vertical-align: bottom; }
+  .mx th[scope="row"], .mx .mxc0 { position: sticky; left: 0; z-index: 1; background: var(--bg); text-align: left; border-right: 1px solid var(--line); min-width: 150px; max-width: 280px; }
+  .mx .mxb { font: inherit; color: inherit; background: transparent; border: 0; cursor: pointer; width: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: inherit; }
+  .mx th[scope="row"] .mxb { align-items: flex-start; }
+  .mx thead .mxb { min-width: 92px; }
+  .mx .mxb:hover { background: var(--card-2); }
+  .mx .mxb:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .mx thead .mxb[aria-pressed="true"] { background: var(--card-2); box-shadow: inset 0 -2px 0 var(--fg); }
+  .mx th[scope="row"] .mxb[aria-pressed="true"] { box-shadow: inset 2px 0 0 var(--fg); }
+  .mx .mxl { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+  .mx small, .mx .mxn, .mx .mxtag { font-family: var(--mono); font-size: 11px; line-height: 1.4; color: var(--muted); }
+  .mx .mxtag { border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 0 5px; }
+  .mx .mxg th { text-align: left; padding: 14px 10px 6px; font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); background: var(--card); }
+  .mx .mxg th span { position: sticky; left: 10px; display: inline-block; }
+  .mx .mxcn { font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px 10px; font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; }
+  .mx td { min-width: 92px; height: 40px; transition: opacity .15s; }
+  .mxt { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: var(--r-ctl); background: var(--tested); color: #03170b; vertical-align: middle; }
+  .mxt svg { width: 13px; height: 13px; }
+  .mx .mxon, .mx tr.mxon > * { background: var(--card-2); }
+  .mx .mxoff { opacity: .3; }
+  .mxsr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  @media (prefers-reduced-motion: reduce) { .mx td { transition: none; } }
+/*</matrices>*/
   /* --- navigation: one view at a time. The dock switches views; the circle menu jumps between a view's sections. --- */
   .view { display: flex; flex-direction: column; gap: 16px; animation: viewin .28s ease both; }
   @keyframes viewin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -486,6 +519,24 @@ function board() {
     return `<div class="lcol"><div class="colh"><span><i class="sq s${ORDER.indexOf(s)}"></i>${LBL[s]}</span><b>${fs.length}</b></div><div class="cards">${fs.map(card).join('') || '<p class="muted" style="padding:4px 2px">None</p>'}</div></div>`; }).join('')}</div></div>`;
 }
 
+/*<matrices>*/
+/* access tables: one real table per matrix. Every count comes from its cells. Tapping a column header shows only the rows it ticks; tapping a row shows which columns tick it. */
+const MX = (M.matrices || []).map(mx => {
+  const cols = mx.columns || [], rows = [].concat(...(mx.groups || []).map(g => g.rows || []));
+  const on = new Set((mx.cells || []).map(p => JSON.stringify(p))), has = (c, r) => on.has(JSON.stringify([c, r]));
+  return { cols, rows, has, colN: c => rows.filter(r => has(c, r.key)).length, rowN: r => cols.filter(c => has(c.key, r)).length };
+});
+const MXHINT = 'Tap a column to see only the rows it ticks. Tap a row to see which columns tick it.';
+const MXTICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+function mxSection(mx, i) {
+  const X = MX[i], qs = mx.questions || [];
+  const head = `<thead><tr><th scope="col" class="mxc0"><span class="mxsr">Item</span></th>${X.cols.map(c => `<th scope="col" data-c="${esc(c.key)}"><button class="mxb" type="button" data-mxc="${esc(c.key)}" aria-pressed="false"><span class="mxl">${esc(c.label)}</span>${c.sub ? `<small>${esc(c.sub)}</small>` : ''}<span class="mxn">${X.colN(c.key)} of ${X.rows.length}</span></button></th>`).join('')}<th scope="col" class="mxcn">Ticks</th></tr></thead>`;
+  const body = (mx.groups || []).map(g => `<tbody><tr class="mxg"><th scope="rowgroup" colspan="${X.cols.length + 2}"><span>${esc(g.label)}</span></th></tr>${(g.rows || []).map(r => `<tr data-r="${esc(r.key)}"><th scope="row"><button class="mxb" type="button" data-mxr="${esc(r.key)}" aria-pressed="false"${r.explanation ? ` title="${esc(r.explanation)}"` : ''}><span class="mxl">${esc(r.label)}</span>${r.tag ? `<span class="mxtag">${esc(r.tag)}</span>` : ''}</button></th>${X.cols.map(c => `<td data-c="${esc(c.key)}">${X.has(c.key, r.key) ? `<span class="mxt" role="img" aria-label="${esc(c.label + ': ' + r.label)}">${MXTICK}</span>` : ''}</td>`).join('')}<td class="mxcn">${X.rowN(r.key)}</td></tr>`).join('')}</tbody>`).join('');
+  return `<section data-mx="${i}"><h2>${esc(mx.title)}</h2>${mx.note ? `<p class="muted">${esc(mx.note)}</p>` : ''}<p class="mxst" role="status">${MXHINT}</p>
+    <div class="mxwrap" role="region" tabindex="0" aria-label="${esc(mx.title)}, scrolls sideways"><table class="mx"><caption class="mxsr">${esc(mx.title)}</caption>${head}${body}</table></div>
+    ${qs.length ? `<h3>Open questions</h3><ul class="plain">${qs.map(q => `<li>${esc(q)}</li>`).join('')}</ul>` : ''}</section>`;
+}
+/*</matrices>*/
 const section = (on, html) => on ? `<section>${html}</section>` : '';
 const tile = (key, n, text, sw) => `<button class="tile" data-f="${key}" aria-pressed="false"><b>${n}</b><span>${sw}${text}</span></button>`;
 function page() {
@@ -511,6 +562,9 @@ function page() {
     ${section(PARTS.length, `<h2>How the system fits together</h2><p class="muted">One box is a screen or a part working in the background. The squares are its features.${assigned.length ? ` Initials show who is assigned to it in ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}.` : ''}</p>${diagram()}<div class="inline" data-pdetail>${partDetail()}</div>`)}
     ${section((M.flows || []).length, `<h2>How far a person can get</h2><p class="lead">${esc(M.headline || '')}</p>${(M.flows || []).map(flowHtml).join('')}`)}
     ${section(F.length, `<h2>Board</h2><p class="muted">Every feature in the column it has reached. Open a card for its evidence.</p>${board()}`)}
+/*<matrices>*/
+    ${(M.matrices || []).map(mxSection).join('')}
+/*</matrices>*/
     ${section(working.length, `<h2>Being worked on now</h2><p class="muted">Assignees from ${M.tracker === 'linear' ? 'Linear' : 'GitHub'}, as of ${day(M.updated)}.</p><div class="cols">${Object.keys(byWho).map(n => `<div class="col"><div class="person"><i>${esc(init(n))}</i><h3>${esc(n)}</h3></div><ul>${byWho[n].map(f => `<li><strong>${esc(f.title)}.</strong> ${esc(f.work.ticket || f.work.branch || '')}</li>`).join('')}</ul></div>`).join('')}</div>`)}
     ${section(blocked.length, `<h2>What is holding things up</h2><p class="muted">Blocked features have a white ring in the squares above. Write what should happen next to any of them.</p>${Object.keys(BK).map(k => { const fs = blocked.filter(f => f.blocked.kind === k); return fs.length ? `<details class="grp"${k === 'decision' ? ' open' : ''}><summary><h3 style="display:inline">${BK[k]}</h3><span class="cnt">${fs.length} ${fs.length === 1 ? 'feature' : 'features'}${k === 'build' ? ' · the only kind that is coding' : ''}</span></summary><ul class="acts">${fs.map(f => act('block', f.id, 'Blocker (' + BK[k] + ')', f.title, f.blocked.note, { since: f.blocked.since })).join('')}</ul></details>` : ''; }).join('')}`)}
     ${section((M.questions || []).length, `<h2>Questions for you</h2><p class="muted">Things the map could not settle from the code, the plan or the tracker.</p><ul class="acts">${(M.questions || []).map((x, i) => act('q', i + 1, 'Question', x.question, x.why, { since: x.since })).join('')}</ul>`)}
@@ -642,6 +696,30 @@ app.addEventListener('keydown', e => {
   if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPart(n); }
 });
 
+/*<matrices>*/
+app.addEventListener('click', e => {
+  const b = e.target.closest('.mxb[data-mxc], .mxb[data-mxr]'); if (!b) return;
+  const sec = b.closest('[data-mx]'), X = MX[+sec.dataset.mx], st = sec.querySelector('.mxst'), again = b.getAttribute('aria-pressed') === 'true';
+  sec.querySelectorAll('.mxb[aria-pressed="true"]').forEach(x => x.setAttribute('aria-pressed', 'false'));
+  sec.querySelectorAll('tbody, tr').forEach(x => { x.hidden = false; });
+  sec.querySelectorAll('.mxon, .mxoff').forEach(x => x.classList.remove('mxon', 'mxoff'));
+  if (again) { st.textContent = MXHINT; return; }
+  b.setAttribute('aria-pressed', 'true');
+  if (b.dataset.mxc != null) {
+    const c = X.cols.find(x => x.key === b.dataset.mxc), n = X.colN(c.key);
+    sec.querySelectorAll('tbody').forEach(g => { let any = false;
+      g.querySelectorAll('tr[data-r]').forEach(tr => { const keep = X.has(c.key, tr.dataset.r); tr.hidden = !keep; any = any || keep; });
+      g.hidden = !any; });
+    sec.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('mxon', x.dataset.c === c.key));
+    st.innerHTML = `<strong>${esc(c.label)}</strong> ticks ${n ? `${n} of ${X.rows.length} rows` : 'no rows'}. Tap it again to show every row.`;
+  } else {
+    const r = X.rows.find(x => x.key === b.dataset.mxr), by = X.cols.filter(c => X.has(c.key, r.key));
+    b.closest('tr').classList.add('mxon');
+    sec.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('mxoff', !by.some(c => c.key === x.dataset.c)));
+    st.innerHTML = `<strong>${esc(r.label)}</strong>: ${by.length ? `ticked by ${by.map(c => esc(c.label)).join(', ')} (${by.length} of ${X.cols.length})` : 'no column ticks it'}.${r.explanation ? ' ' + esc(r.explanation) : ''} Tap it again to clear.`;
+  }
+});
+/*</matrices>*/
 /* progress over time: hovering or tabbing to a column reads it out; next-step prompts copy on click */
 const readCol = e => { const h = e.target.closest && e.target.closest('.hit[data-h]'); if (h) document.getElementById('histread').innerHTML = histRead(+h.dataset.h); };
 app.addEventListener('mouseover', readCol);
@@ -680,6 +758,9 @@ const ICON = {
   users: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><circle cx="18" cy="9" r="3"/><path d="M17.5 14.2A5 5 0 0 1 22 20"/>',
   message: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   text: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+/*<matrices>*/
+  table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+/*</matrices>*/
   bars: '<path d="M5 20V10M12 20V4M19 20v-8"/>',
   chart: '<path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>',
   archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/>',
@@ -702,6 +783,10 @@ const NAV = {
   'Waiting for your OK': ['answers', 'inbox', 'Your OK'], 'Your answers': ['answers', 'copy', 'Your answers']
 };
 const VIEWS = [['overview', 'Overview', 'home'], ['scope', 'Scope', 'grid'], ['system', 'System', 'network'], ['flows', 'Flows', 'route'], ['board', 'Board', 'columns'], ['team', 'Team', 'users'], ['answers', 'Needs you', 'message']];
+/*<matrices>*/
+(M.matrices || []).forEach(mx => { NAV[String(mx.title).trim()] = ['access', 'table', String(mx.title).trim()]; });
+VIEWS.splice(VIEWS.length - 1, 0, ['access', 'Access', 'table']);
+/*</matrices>*/
 const MARKVIEWS = ['scope', 'system', 'board'];
 const LIVE = [];
 (function buildViews() {

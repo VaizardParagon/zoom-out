@@ -81,5 +81,33 @@
   ],
   "parked": [
     { "title": "Loyalty points", "note": "Dropped by the client on 4 Nov." }
+  ],
+  "matrices": [
+    {
+      "title": "What each staff role can do",
+      "note": "Read from the role definitions in src/staff/roles.ts. Roles that the office makes for itself are not shown.",
+      "columns": [
+        { "key": "ramp", "label": "Ramp crew" },
+        { "key": "office", "label": "Booking office" },
+        { "key": "manager", "label": "Sailing manager", "sub": "version 2" }
+      ],
+      "groups": [
+        { "label": "Bookings", "rows": [
+          { "key": "booking-read", "label": "See a booking", "explanation": "Open any booking and read who is travelling.", "tag": "all sailings" },
+          { "key": "booking-change", "label": "Change a booking", "explanation": "Move a booking to another sailing or change its vehicle." },
+          { "key": "refund", "label": "Refund a booking", "explanation": "Send money back to the card that paid." }
+        ] },
+        { "label": "Boarding", "rows": [
+          { "key": "scan", "label": "Scan tickets", "explanation": "Check a ticket at the ramp and let the passenger board.", "tag": "own sailing only" },
+          { "key": "delay", "label": "Mark a sailing late", "explanation": "Set a new departure time and text every passenger on it." }
+        ] }
+      ],
+      "cells": [
+        ["ramp", "scan"], ["ramp", "booking-read"],
+        ["office", "booking-read"], ["office", "booking-change"], ["office", "refund"],
+        ["manager", "booking-read"], ["manager", "booking-change"], ["manager", "scan"], ["manager", "delay"]
+      ],
+      "questions": ["Should the booking office also be able to mark a sailing late?"]
+    }
   ]
 }

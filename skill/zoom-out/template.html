@@ -535,6 +535,10 @@ const MX = (M.matrices || []).map(mx => {
 });
 const MXHINT = 'Tap a column to see only the rows it ticks. Tap a row to see which columns tick it.';
 const MXTICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+/* the "Switch to" row shown while a column is selected; each button names its column with its sub-label */
+function mxSwitch(X, c) {
+  return `Switch to ${X.cols.map((x, j) => x === c ? '' : `<button class="mxb" type="button" data-mxc="${j}">${esc(x.label)}${x.sub ? ` <small>${esc(x.sub)}</small>` : ''}</button>`).join(' ')}`;
+}
 function mxSection(mx, i) {
   const X = MX[i], qs = mx.questions || [];
   const head = `<thead><tr><th scope="col" class="mxc0"><span class="mxsr">Item</span></th>${X.cols.map((c, j) => `<th scope="col" data-c="${j}"><button class="mxb" type="button" data-mxc="${j}" aria-pressed="false"><span class="mxl">${esc(c.label)}</span>${c.sub ? `<small>${esc(c.sub)}</small>` : ''}<span class="mxn">${X.colN(c.key)} of ${X.rows.length}</span></button></th>`).join('')}<th scope="col" class="mxcn">Ticks</th></tr></thead>`;
@@ -724,7 +728,7 @@ app.addEventListener('click', e => {
     sec.querySelectorAll('[data-c]').forEach(x => { x.hidden = x.dataset.c !== b.dataset.mxc; });
     sec.querySelectorAll('.mxg th').forEach(x => { x.colSpan = 3; });
     st.innerHTML = `<strong>${esc(c.label)}</strong> ticks ${n ? `${n} of ${X.rows.length} rows` : 'no rows'}. Tap it again to show every row and column.`;
-    if (X.cols.length > 1) { sw.innerHTML = `Switch to ${X.cols.map((x, j) => x === c ? '' : `<button class="mxb" type="button" data-mxc="${j}">${esc(x.label)}</button>`).join(' ')}`; sw.hidden = false; }
+    if (X.cols.length > 1) { sw.innerHTML = mxSwitch(X, c); sw.hidden = false; }
     if (t !== b) b.focus();
   } else {
     const r = X.rows[+b.dataset.mxr], by = X.cols.filter(c => X.has(c.key, r.key));

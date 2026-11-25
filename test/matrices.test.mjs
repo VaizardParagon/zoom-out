@@ -140,3 +140,19 @@ test('a project template without matrix support is reported as out of date when 
   const out = execFileSync(process.execPath, [join(skill, 'build.mjs'), root], { encoding: 'utf8' });
   assert.match(out, /TEMPLATE OUT OF DATE: .*access tables/);
 });
+
+// Re-review of d7c8eef: a "Switch to" button names its column with the sub-label, so two
+// columns with one label stay distinguishable on screen and to assistive technology.
+test('switch-to buttons carry each column sub-label and select their own column', () => {
+  const map = { ...without(), matrices: [{ title: 'Two roles', columns: [
+    { key: 'n', label: 'Role', sub: 'North' }, { key: 's', label: 'Role', sub: 'South <b>' }, { key: 'x', label: 'Lead' }],
+    groups: [{ label: 'G', rows: [{ key: 'r', label: 'Row' }] }], cells: [['n', 'r']] }] };
+  const blocks = [...template.matchAll(/^[ \t]*\/\*<matrices>\*\/\r?\n([\s\S]*?)^[ \t]*\/\*<\/matrices>\*\/\r?\n/gm)].map(m => m[1]);
+  const code = blocks.find(b => b.includes('function mxSwitch'));
+  assert.ok(code, 'template defines mxSwitch in a matrices block');
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const html = new Function('M', 'esc', `${code}\nreturn mxSwitch(MX[0], MX[0].cols[2]);`)(map, esc);
+  const buttons = [...html.matchAll(/<button[^>]*data-mxc="(\d+)"[^>]*>([\s\S]*?)<\/button>/g)]
+    .map(m => ({ col: +m[1], name: m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() }));
+  assert.deepEqual(buttons, [{ col: 0, name: 'Role North' }, { col: 1, name: 'Role South &lt;b&gt;' }]);
+});

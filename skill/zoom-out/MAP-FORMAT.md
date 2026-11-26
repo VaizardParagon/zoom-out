@@ -29,6 +29,7 @@
 | `since` | On a question, a pending item and a feature's `blocked`: the date it was first raised. It stays the same while the item rolls over from run to run, and the page shows "open since" for anything older than this run. **Checked:** a date when present. |
 | `pending` | Proposals waiting for the human's OK: `title`, `note`, `source`. |
 | `parked` | Features not in this release: `title`, `note`. |
+| `matrices` | Optional access tables, such as which account type can do what. See "A matrix" below. The page gets an **Access** view only when this list has at least one matrix. **Checked.** |
 
 ## A part (box)
 
@@ -62,6 +63,43 @@
 The page colours a step by its least-proven feature and marks where each lane stops: the first step below `tested`, or blocked.
 
 **Checked:** every feature id exists; every lane named in a step is in `lanes`.
+
+## A matrix
+
+A table of columns against rows, with a tick where a column has a row: account types against what each can do, plans against what each includes. Each matrix is one section of the Access view.
+
+| Field | What it holds |
+|---|---|
+| `title` | The section heading, and the section's name in the circle menu. **Checked:** required and unique. It may repeat a heading the page uses elsewhere, such as "Board". |
+| `note` | Optional. One or two sentences under the title: where the table comes from, what it leaves out. |
+| `columns` | `key`, `label`, optional `sub` (a short second line, such as a version). **Checked:** at least one; keys unique. |
+| `groups` | Row groups, each with `label` and `rows`. A row has `key`, `label`, optional `explanation` (one line, shown on hover and when the row is tapped) and optional `tag` (a short marker beside the label, such as "assigned only"). **Checked:** at least one group; each group has rows; row keys unique across the matrix. |
+| `cells` | The ticks, as `[column key, row key]` pairs. **Checked:** both keys exist; no pair twice. |
+| `questions` | Optional. Open questions about the table, as plain text, listed under it. |
+
+Counts (ticks per column, per row) are worked out by the page from `cells`. Never write a count into the map. Write the matrix from a source the human can check (a command's output, the role definitions in the code), not by hand, and say which in `note`.
+
+```json
+"matrices": [
+  {
+    "title": "What each staff role can do",
+    "note": "Read from src/staff/roles.ts.",
+    "columns": [ { "key": "ramp", "label": "Ramp crew" }, { "key": "manager", "label": "Sailing manager", "sub": "version 2" } ],
+    "groups": [
+      { "label": "Boarding", "rows": [
+        { "key": "scan", "label": "Scan tickets", "explanation": "Check a ticket at the ramp.", "tag": "own sailing only" },
+        { "key": "delay", "label": "Mark a sailing late", "explanation": "Set a new departure time." }
+      ] }
+    ],
+    "cells": [ ["ramp", "scan"], ["manager", "scan"], ["manager", "delay"] ],
+    "questions": ["Should ramp crew also mark a sailing late?"]
+  }
+]
+```
+
+The page draws each matrix as a real table with column and row headers; each tick is announced as "column: row". Tapping a column header shows only that column and the rows it ticks; tapping a row shows which columns tick it; tapping again clears. On a phone the table scrolls sideways inside its own box, with the row labels held in place.
+
+A map without `matrices` gets exactly the page it had before access tables existed: the build leaves the template's access-table code out. That code sits in `template.html` between lines reading `/*<matrices>*/` and `/*</matrices>*/`; keep those lines when changing a project's copy. A project's copy without them shows no access table, and the build says `TEMPLATE OUT OF DATE`.
 
 ## A patch
 

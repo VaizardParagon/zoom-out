@@ -96,6 +96,33 @@ feats.forEach(f => {
     lists.flat().forEach(id => need(featIds.has(id), `flow ${fl.title}, step ${st.title}: feature "${id}" does not exist`));
   });
 });
+// Access tables: optional, one table per matrix, on the page's Access view.
+// The page routes a matrix's section by its data-mx attribute, so any title works, even one like "Board".
+need(M.matrices == null || Array.isArray(M.matrices), 'matrices: must be a list');
+const MXS = Array.isArray(M.matrices) ? M.matrices : [];
+MXS.forEach((mx, i) => {
+  const n = `matrices ${i + 1}${mx && typeof mx.title === 'string' ? ` (${mx.title})` : ''}`;
+  if (!mx || typeof mx !== 'object' || Array.isArray(mx)) return need(false, `${n}: must be an object`);
+  need(typeof mx.title === 'string' && mx.title.trim(), `${n}: needs title`);
+  need(mx.note == null || typeof mx.note === 'string', `${n}: note must be text`);
+  const cols = Array.isArray(mx.columns) ? mx.columns : [], groups = Array.isArray(mx.groups) ? mx.groups : [];
+  need(cols.length, `${n}: columns: need at least one, each with key and label`);
+  cols.forEach((c, j) => need(c && typeof c.key === 'string' && c.key && c.label && (c.sub == null || typeof c.sub === 'string'), `${n}, column ${j + 1}: needs key and label (sub is optional text)`));
+  need(groups.length, `${n}: groups: need at least one, each with label and rows`);
+  groups.forEach((g, j) => {
+    need(g && g.label && Array.isArray(g.rows) && g.rows.length, `${n}, group ${j + 1}: needs label and rows`);
+    ((g && Array.isArray(g.rows)) ? g.rows : []).forEach((r, k) => need(r && typeof r.key === 'string' && r.key && r.label, `${n}, group ${j + 1}, row ${k + 1}: needs key and label`));
+  });
+  const rows = groups.flatMap(g => (g && Array.isArray(g.rows) ? g.rows : []));
+  dupes(cols.map(c => c && c.key).filter(Boolean), `${n} column key`);
+  dupes(rows.map(r => r && r.key).filter(Boolean), `${n} row key`);
+  const ck = new Set(cols.map(c => c && c.key)), rk = new Set(rows.map(r => r && r.key));
+  need(Array.isArray(mx.cells), `${n}: cells must be a list of [column key, row key] pairs`);
+  (Array.isArray(mx.cells) ? mx.cells : []).forEach(p => need(Array.isArray(p) && p.length === 2 && ck.has(p[0]) && rk.has(p[1]), `${n}: cell ${JSON.stringify(p)} needs a column key and a row key that exist`));
+  dupes((Array.isArray(mx.cells) ? mx.cells : []).map(p => JSON.stringify(p)), `${n} cell`);
+  need(mx.questions == null || (Array.isArray(mx.questions) && mx.questions.every(q => typeof q === 'string' && q.trim())), `${n}: questions must be a list of text`);
+});
+dupes(MXS.map(mx => mx && mx.title).filter(Boolean), 'matrix title');
 if (errs.length) { console.error(`map.json has ${errs.length} problem(s):\n- ${errs.join('\n- ')}`); process.exit(1); }
 
 // Progress over time: the ladder counts in every committed version of the map, plus this one. Read from git, never stored in map.json.
@@ -122,7 +149,13 @@ const template = existsSync(custom) ? readFileSync(custom, 'utf8') : shipped;
 const version = t => { const m = /<meta name="zoom-out-template" content="(\d+)">/.exec(t); return m ? +m[1] : 0; };
 const behind = existsSync(custom) && version(template) < version(shipped);
 const htmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-const fragment = template
+// The template's access-table code sits between lines reading /*<matrices>*/ and /*</matrices>*/.
+// A map with matrices keeps that code and loses the marker lines; a map without them loses the whole
+// blocks, so its page is exactly the page it had before access tables existed.
+const MX_BLOCK = /^[ \t]*\/\*<matrices>\*\/\r?\n[\s\S]*?^[ \t]*\/\*<\/matrices>\*\/\r?\n/gm;
+const MX_MARK = /^[ \t]*\/\*<\/?matrices>\*\/\r?\n/gm;
+const mxSupport = template.includes('/*<matrices>*/');
+const fragment = (MXS.length ? template.replace(MX_MARK, '') : template.replace(MX_BLOCK, ''))
   .replace('__TITLE__', () => htmlEsc(`${M.project} System Map`))
   .replace('__MAP_JSON__', () => JSON.stringify({ ...M, _history: history }).replace(/</g, '\\u003c'));
 writeFileSync(join(dir, 'index.artifact.html'), fragment);
@@ -159,6 +192,8 @@ say.push(`Progress over time: ${history.length} refresh(es) charted.`);
 const pathless = feats.filter(f => !(f.paths || []).length).length;
 if (pathless) say.push(`${pathless} feature(s) have no paths, so every refresh must recheck them.`);
 if ((M.pending || []).length) say.push(`${M.pending.length} item(s) waiting for the human's OK.`);
+if (MXS.length) say.push(`Access tables: ${MXS.length} (${MXS.map(mx => `${mx.title}: ${mx.columns.length} columns, ${mx.groups.reduce((a, g) => a + g.rows.length, 0)} rows, ${mx.cells.length} ticks`).join('; ')}).`);
+if (MXS.length && !mxSupport) say.push(`TEMPLATE OUT OF DATE: system-map/template.html has no access tables, so the map's matrices are not shown. Bring the copy up to date (see "Does the default page fit?" in SKILL.md).`);
 if (behind) say.push(`TEMPLATE OUT OF DATE: system-map/template.html is version ${version(template)} and the skill's is version ${version(shipped)}. Bring the copy up to date (see "Does the default page fit?" in SKILL.md).`);
 say.push(`Template: ${existsSync(custom) ? 'this project\'s own copy' : 'default'}.`, `Page: ${join(dir, 'index.html')}`);
 console.log(say.join('\n'));

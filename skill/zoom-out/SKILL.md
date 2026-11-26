@@ -79,7 +79,7 @@ Where an answer is too unclear to act on, ask the human about that one answer. D
 
 ## Does the default page fit?
 
-Ask this on the first run and whenever the map's shape changes. The default page bends through the map alone: any number of boxes and flows, bands named for this project, `lanes` on a flow that runs differently for different kinds of thing, and sections that vanish when their data is empty.
+Ask this on the first run and whenever the map's shape changes. The default page bends through the map alone: any number of boxes and flows, bands named for this project, `lanes` on a flow that runs differently for different kinds of thing, optional access tables (`matrices`: columns such as account types against rows of what each can do), and sections that vanish when their data is empty.
 
 When this project needs something the map cannot express, tell the human in a line or two what does not fit and what you are adding, copy this skill's `template.html` to `system-map/template.html`, and change the copy. The build uses a project's own copy when one exists. On a custom page every count, colour and status still comes from the map data, and anything new the page shows is a new field in the map.
 

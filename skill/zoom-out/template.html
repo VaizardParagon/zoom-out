@@ -274,7 +274,8 @@
   .mx th[scope="row"], .mx .mxc0 { position: sticky; left: 0; z-index: 1; background: var(--bg); text-align: left; border-right: 1px solid var(--line); min-width: 150px; max-width: 280px; }
   .mx .mxb { font: inherit; color: inherit; background: transparent; border: 0; cursor: pointer; width: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: inherit; }
   .mx th[scope="row"] .mxb { align-items: flex-start; }
-  .mx thead .mxb { min-width: 92px; }
+  .mx thead .mxb { min-width: 92px; max-width: 220px; margin-inline: auto; }
+  .mx thead .mxl { overflow-wrap: break-word; hyphens: manual; }
   .mx .mxb:hover { background: var(--card-2); }
   .mx .mxb:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .mx thead .mxb[aria-pressed="true"] { background: var(--card-2); box-shadow: inset 0 -2px 0 var(--fg); }

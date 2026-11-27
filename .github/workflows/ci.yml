@@ -25,6 +25,8 @@ jobs:
           node --check install.mjs
           node --check skill/zoom-out/build.mjs
           node --check skill/zoom-out/map.mjs
+      - name: Run matrix tests
+        run: node --test test/matrices.test.mjs
       - name: Build the example map
         run: |
           project=$(mktemp -d)

@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check JavaScript syntax
+        run: |
+          node --check install.mjs
+          node --check skill/zoom-out/build.mjs
+          node --check skill/zoom-out/map.mjs
+      - name: Build the example map
+        run: |
+          project=$(mktemp -d)
+          mkdir -p "$project/system-map"
+          cp skill/zoom-out/example-map.json "$project/system-map/map.json"
+          node skill/zoom-out/build.mjs "$project"
+          test -s "$project/system-map/index.html"
+          test -s "$project/system-map/index.artifact.html"
